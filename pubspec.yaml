@@ -1,4 +1,4 @@
-name: flutter_application_1
+name: flutter_application_demo
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.18.0 # Add this line (check for the latest version)
+
 
 
   # The following adds the Cupertino Icons font to your application.
