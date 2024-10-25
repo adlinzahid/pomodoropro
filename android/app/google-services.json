@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "867363482583",
+    "project_id": "pomodoropro-211",
+    "storage_bucket": "pomodoropro-211.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867363482583:android:0925ddd58352c7b4d7f992",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZgE1IGcM-gT5fndeYz2mMNr4teu2_CZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

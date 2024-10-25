@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'todo_page.dart'; // Import the To-Do List Page
+//import 'todo_page.dart'; // Import the To-Do List Page
+import 'main.dart'; // Import main homepage
 
 void main() {
   runApp(const MyApp());
@@ -33,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const TodoListPage()),
+        MaterialPageRoute(builder: (context) => MyHomePage()),
       );
     });
   }

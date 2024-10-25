@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'todo_page.dart'; // Import the todo_page.dart file
-
 
 void main() {
   runApp(const MyApp());
@@ -167,13 +165,15 @@ class HomePage extends StatelessWidget {
                 "Today's Goals",
                 style: TextStyle(fontSize: 25.0),
               ),
-               IconButton(
-                 icon: Icon(Icons.add_circle_outlined,
-                     size: 35.0, color: Colors.lightGreen[300]),
-                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => TodoListPage()));
-               },
-               ),
+              // IconButton(
+              //   icon: Icon(Icons.add_circle_outlined,
+              //       size: 35.0, color: Colors.lightGreen[300]),
+              //   onPressed: () {
+              //     setState(() {
+              //       _selectedIndex = 1;
+              //     });
+              //   },
+              // ),
             ],
           ),
         ),
