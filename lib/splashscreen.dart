@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 //import 'todo_page.dart'; // Import the To-Do List Page
-import 'main.dart'; // Import main homepage
+import 'main.dart';
 import 'signup_page.dart';
-import 'dart:ui' show lerpDouble;
 
 void main() {
   runApp(const MyApp());
@@ -38,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> {
         context,
         MaterialPageRoute(
             builder: (context) =>
-                SignUpPage()), //_SignUpPageState createState() => _SignUpPageState();
+                MyHomePage()), //_SignUpPageState createState() => _SignUpPageState();
       );
     });
   }
