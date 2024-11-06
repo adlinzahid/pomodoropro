@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-//import 'todo_page.dart'; // Import the To-Do List Page
-import 'main.dart';
-import 'signup_page.dart';
+import 'login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -31,13 +29,11 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to To-Do List page after 5 seconds
+    // Navigate to Login Page after 5 seconds
     Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-            builder: (context) =>
-                MyHomePage()), //_SignUpPageState createState() => _SignUpPageState();
+        MaterialPageRoute(builder: (context) => LoginPage()), //login page
       );
     });
   }

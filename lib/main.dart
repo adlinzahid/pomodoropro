@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_demo/signup_page.dart';
 import 'todo_page.dart'; // Import the todo_page.dart file
-import 'signup_page.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'splashscreen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -14,12 +19,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pomodoro Pro',
       theme: ThemeData(),
-      home: MyHomePage(),
+      home: SplashScreen(), //app will first show splash screen
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -28,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
   // List of pages to display based on the selected index
-  static List<Widget> _pages = <Widget>[
+  static final List<Widget> _pages = <Widget>[
     HomePage(), // Updated HomePage widget
     Center(child: Text('To-Do List Page', style: TextStyle(fontSize: 24))),
     Center(
@@ -106,8 +113,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// Define the new HomePage widget with the clickable box
+// Define the new HomePage widget with the clickable box and sign-up button
 class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(

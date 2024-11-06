@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'main.dart'; // Import the main.dart file
-import 'login_page.dart';
+import 'signup_page.dart';
+import 'main.dart';
 
-class SignUpPage extends StatelessWidget {
+class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.green.shade50, // Light green background for a fresh look
+      backgroundColor: Colors.green.shade50, // Light green background
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 60.0),
         child: Column(
@@ -23,7 +22,7 @@ class SignUpPage extends StatelessWidget {
             const SizedBox(height: 20),
             // Title
             Text(
-              'Create Your Account',
+              'Welcome Back',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -33,11 +32,6 @@ class SignUpPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
             // Input fields
-            _buildTextField(
-              hintText: 'Full Name',
-              icon: Icons.person,
-            ),
-            const SizedBox(height: 20),
             _buildTextField(
               hintText: 'Email',
               icon: Icons.email,
@@ -50,14 +44,14 @@ class SignUpPage extends StatelessWidget {
               obscureText: true,
             ),
             const SizedBox(height: 40),
-            // Sign up button
+            // Login button
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
-                            MyHomePage())); // Handle sign-up logic here
+                            MyHomePage())); // Handle login logic here
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
@@ -67,7 +61,7 @@ class SignUpPage extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Sign Up',
+                'Log In',
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
@@ -77,7 +71,7 @@ class SignUpPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Already have an account?',
+                  'Don\'t have an account?',
                   style: TextStyle(fontSize: 16, color: Colors.green.shade900),
                 ),
                 TextButton(
@@ -86,10 +80,10 @@ class SignUpPage extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                LoginPage())); // Navigate to the login page
+                                SignUpPage())); // Navigate to the sign-up page
                   },
                   child: Text(
-                    'Log in',
+                    'Sign up',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.green.shade700,
@@ -132,6 +126,6 @@ class SignUpPage extends StatelessWidget {
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: SignUpPage(),
+    home: LoginPage(),
   ));
 }
