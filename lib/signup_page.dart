@@ -1,8 +1,32 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pomodoro_pro/firebase_auth_services.dart';
 import 'main.dart'; // Import the main.dart file
 import 'login_page.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _SignUpPageState createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final FirebaseAuthServices _firebaseAuth = FirebaseAuthServices();
+
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,17 +58,20 @@ class SignUpPage extends StatelessWidget {
             const SizedBox(height: 30),
             // Input fields
             _buildTextField(
+              controller: _usernameController,
               hintText: 'Full Name',
               icon: Icons.person,
             ),
             const SizedBox(height: 20),
             _buildTextField(
+              controller: _emailController,
               hintText: 'Email',
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
             _buildTextField(
+              controller: _passwordController,
               hintText: 'Password',
               icon: Icons.lock,
               obscureText: true,
@@ -52,12 +79,27 @@ class SignUpPage extends StatelessWidget {
             const SizedBox(height: 40),
             // Sign up button
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            MyHomePage())); // Handle sign-up logic here
+              onPressed: () async {
+                final String email = _emailController.text.trim();
+                final String password = _passwordController.text.trim();
+                final String username = _usernameController.text.trim();
+
+                // call the signup method
+                User? user = await _firebaseAuth.signUpWithEmailAndPassword(
+                    email, password);
+                if (user != null) {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              MyHomePage())); // Handle sign-up logic here
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sign up failed. Please try again.'),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
@@ -107,12 +149,14 @@ class SignUpPage extends StatelessWidget {
 
   // Helper method for building text fields
   Widget _buildTextField({
+    TextEditingController? controller, // Add controller parameter
     required String hintText,
     required IconData icon,
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
+      controller: controller, // Assign the controller
       obscureText: obscureText,
       keyboardType: keyboardType,
       decoration: InputDecoration(
@@ -126,6 +170,27 @@ class SignUpPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _signUp() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+    final User? user =
+        await _firebaseAuth.signUpWithEmailAndPassword(email, password);
+    if (user != null) {
+      // Navigate to the home page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MyHomePage()),
+      );
+    } else {
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sign up failed. Please try again.'),
+        ),
+      );
+    }
   }
 }
 

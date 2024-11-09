@@ -1,8 +1,30 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pomodoro_pro/firebase_auth_services.dart';
 import 'signup_page.dart';
 import 'main.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  // ignore: library_private_types_in_public_api
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final FirebaseAuthServices _firebaseAuth = FirebaseAuthServices();
+
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,12 +55,14 @@ class LoginPage extends StatelessWidget {
             const SizedBox(height: 30),
             // Input fields
             _buildTextField(
+              controller: _emailController,
               hintText: 'Email',
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 20),
             _buildTextField(
+              controller: _passwordController,
               hintText: 'Password',
               icon: Icons.lock,
               obscureText: true,
@@ -46,13 +70,7 @@ class LoginPage extends StatelessWidget {
             const SizedBox(height: 40),
             // Login button
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            MyHomePage())); // Handle login logic here
-              },
+              onPressed: _login,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -93,6 +111,24 @@ class LoginPage extends StatelessWidget {
                 ),
               ],
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    // Navigate to forgot password page
+                  },
+                  child: Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -101,12 +137,14 @@ class LoginPage extends StatelessWidget {
 
   // Helper method for building text fields
   Widget _buildTextField({
+    required TextEditingController? controller,
     required String hintText,
     required IconData icon,
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       decoration: InputDecoration(
@@ -120,6 +158,64 @@ class LoginPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Handle login functionality
+  Future<void> _login() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    try {
+      // Attempt to sign in using the email and password
+      User? user =
+          await _firebaseAuth.signInWithEmailAndPassword(email, password);
+
+      // If login is successful
+      if (user != null) {
+        // Navigate to the home page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MyHomePage()),
+        );
+      } else {
+        // This condition should not be reached in normal scenarios,
+        // because Firebase will either throw an exception or return a user.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invalid email or password'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      // Handle specific error types from FirebaseAuthException
+      String errorMessage = 'Login failed. Please try again.';
+
+      // Handle different FirebaseAuthException error codes
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Incorrect password provided for that user.';
+      } else if (e.code == 'invalid-email') {
+        errorMessage = 'The email address is badly formatted.';
+      }
+
+      // Show the error message using a SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      // Catch any other errors and show a generic message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred. Please try again later.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
 
