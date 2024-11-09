@@ -9,7 +9,9 @@ plugins {
 apply plugin: 'java' // Apply the Java plugin here
 
 def flutterRoot = rootProject.ext.has("flutterRoot") ? rootProject.ext.flutterRoot : "../../flutter"
-apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+apply from: "/flutter/packages/flutter_tools/gradle/flutter.gradle"
+
+
 
 android {
     namespace = "com.example.PomodoroPro"
