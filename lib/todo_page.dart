@@ -143,9 +143,22 @@ class _TodoListPageState extends State<TodoListPage> {
       appBar: AppBar(
         title: const Text('To-Do List'),
         centerTitle: true,
+        
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start, // Align to the left
         children: [
+           // Title for 'Tasks' aligned to the left and bold
+          const Padding(
+            padding: EdgeInsets.only(left: 16.0),
+            child: Text(
+              'Tasks', // 'Tasks' title under 'To-Do List'
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
           Expanded(
             child: ListView.builder(
               itemCount: _tasks.length,
@@ -185,119 +198,171 @@ class _TodoListPageState extends State<TodoListPage> {
             ),
           ),
           Padding(
+            
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
                 _showTaskCreationSheet();
               },
               style: ElevatedButton.styleFrom(
+                backgroundColor:  const Color.fromARGB(255, 222, 255, 183), // Sets the button background to light green
+                foregroundColor: Colors.black, // Sets the text color to black
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 minimumSize: const Size(
                     double.infinity, 50), // Full width rectangular button
+                     elevation: 5, // Adds shadow depth
+                     shadowColor: Colors.grey.withOpacity(0.5), // Shadow color and transparency
               ),
-              child: const Text('+ Create a Task'),
+              child: const Text(
+                '+ Create a Task',
+                style: TextStyle(
+                fontWeight: FontWeight.bold, // Makes the text bold    
+                ),
+              
             ),
-          ),
+          )),
         ],
       ),
     );
   }
 
   void _showTaskCreationSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: const BoxDecoration(
-            color: Colors.green, // Green background for the box
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Details title in the center
-              const Text(
-                'Details',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // Allows it to expand to almost full screen
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(20), // Rounded corners for the top of the sheet
+      ),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        expand: false, // Prevents the sheet from covering the entire screen
+        builder: (context, scrollController) {
+          return Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: const BoxDecoration(
+              color: Colors.green, // Green background for the box
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(20),
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Task Name',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController, // Allows scrolling if needed
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _pickDate,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.green,
-                      ),
-                      child: const Text('Pick Date'),
+                  // Details title in the center
+                  const Text(
+                    'Details',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _pickTime,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.green,
+                  const SizedBox(height: 20),
+
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Task Name',
+                     labelStyle: TextStyle(color: const Color.fromRGBO(45, 94, 62, 1)), //text color in field
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10), // Rounded corners   
                       ),
-                      child: const Text('Pick Time'),
+
+                      
+                      // Shadow effect
+                      enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                     borderSide: const BorderSide(color: Colors.transparent),
+                        
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _notesController,
+                    decoration: InputDecoration(
+                      labelText: 'Notes',
+                      labelStyle: TextStyle(color: const Color.fromRGBO(45, 94, 62, 1)), //text color in field
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.transparent),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _pickDate,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color.fromRGBO(45, 94, 62, 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Pick Date'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _pickTime,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color.fromRGBO(45, 94, 62, 1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text('Pick Time'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the sheet on cancel
+                        },
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _saveTask,
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Close the sheet on cancel
-                    },
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _saveTask,
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 }

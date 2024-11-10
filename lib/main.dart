@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner:false,
       title: 'Pomodoro Pro',
       theme: ThemeData(),
       home: SplashScreen(), //app will first show splash screen
@@ -37,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // List of pages to display based on the selected index
   static final List<Widget> _pages = <Widget>[
     HomePage(), // Updated HomePage widget
-    Center(child: Text('To-Do List Page', style: TextStyle(fontSize: 24))),
+    TodoListPage(), // Links to the TodoListPage in `todo_page.dart`
     Center(
         child:
             Text('Group Collaboration Page', style: TextStyle(fontSize: 24))),
