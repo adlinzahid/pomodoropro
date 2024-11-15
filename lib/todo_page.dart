@@ -24,6 +24,8 @@ class _TodoListPageState extends State<TodoListPage> {
   int _completedTaskCount = 0;
   int _streakPoints = 0;
 
+  // Initialize _tasks as an empty list
+  List<Map<String, dynamic>> _tasks = [];
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -146,7 +148,6 @@ void _deleteTask(int index) {
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
   padding: const EdgeInsets.all(16.0),
@@ -257,14 +258,9 @@ Expanded(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 222, 255, 183),
                 foregroundColor: Colors.black,
-                backgroundColor: const Color.fromARGB(255, 222, 255, 183),
-                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                minimumSize: const Size(double.infinity, 50),
-                elevation: 5,
-                shadowColor: Colors.grey.withOpacity(0.5),
                 minimumSize: const Size(double.infinity, 50),
                 elevation: 5,
                 shadowColor: Colors.grey.withOpacity(0.5),
@@ -273,14 +269,10 @@ Expanded(
                 '+ Create a Task',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-          ),
-        ],
-      ),
-    );
+        ]
+    ));
   }
 
   void _showTaskCreationSheet() {
