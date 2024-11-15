@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -10,7 +11,6 @@ class TodoListPage extends StatefulWidget {
 }
 
 class _TodoListPageState extends State<TodoListPage> {
-  final List<Map<String, dynamic>> _tasks = [];
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
@@ -146,6 +146,7 @@ void _deleteTask(int index) {
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
   padding: const EdgeInsets.all(16.0),
@@ -256,9 +257,14 @@ Expanded(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 222, 255, 183),
                 foregroundColor: Colors.black,
+                backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                minimumSize: const Size(double.infinity, 50),
+                elevation: 5,
+                shadowColor: Colors.grey.withOpacity(0.5),
                 minimumSize: const Size(double.infinity, 50),
                 elevation: 5,
                 shadowColor: Colors.grey.withOpacity(0.5),
@@ -267,7 +273,10 @@ Expanded(
                 '+ Create a Task',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
+          ),
           ),
         ],
       ),
