@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:async'; // For the countdown timer
+import 'dart:async';
 
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
@@ -13,13 +13,16 @@ class _TodoListPageState extends State<TodoListPage> {
   final List<Map<String, dynamic>> _tasks = [];
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  Timer? _pomodoroTimer; // Timer object for Pomodoro
-  int _timeRemaining = 0; // Time remaining for the Pomodoro in seconds
-  final int _pomodoroDuration =
-      25 * 60; // Pomodoro duration in seconds (25 minutes)
-  int _currentTaskIndex = -1; // Index of the task with active Pomodoro
+  Timer? _pomodoroTimer;
+  int _timeRemaining = 0;
+  final int _pomodoroDuration = 25 * 60;
+  int _currentTaskIndex = -1;
+  String _searchQuery = '';
+  int _completedTaskCount = 0;
+  int _streakPoints = 0;
 
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(
@@ -48,10 +51,8 @@ class _TodoListPageState extends State<TodoListPage> {
   }
 
   void _saveTask() {
-    if (_nameController.text.isEmpty ||
-        _selectedDate == null ||
-        _selectedTime == null) {
-      return; // Input validation
+    if (_nameController.text.isEmpty || _selectedDate == null || _selectedTime == null) {
+      return;
     }
     setState(() {
       _tasks.add({
@@ -59,22 +60,22 @@ class _TodoListPageState extends State<TodoListPage> {
         'notes': _notesController.text,
         'date': _selectedDate,
         'time': _selectedTime,
-        'pomodoro': false, // Indicates if Pomodoro is running
+        'pomodoro': false,
+        'completed': false,
       });
     });
     _nameController.clear();
     _notesController.clear();
     _selectedDate = null;
     _selectedTime = null;
-    Navigator.pop(context); // Close the task creation bottom sheet
+    Navigator.pop(context);
   }
 
   void _startPomodoro(int index) {
     setState(() {
       _currentTaskIndex = index;
       _tasks[index]['pomodoro'] = true;
-      _timeRemaining =
-          _pomodoroDuration; // Set remaining time to full duration (25 minutes)
+      _timeRemaining = _pomodoroDuration;
     });
     _pomodoroTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -88,53 +89,52 @@ class _TodoListPageState extends State<TodoListPage> {
         }
       });
     });
-    _showPomodoroDialog(index); // Show the countdown in a dialog
+    _showPomodoroDialog(index);
   }
 
   void _stopPomodoro(int index) {
-    if (_pomodoroTimer != null) {
-      _pomodoroTimer?.cancel();
-      setState(() {
-        _tasks[index]['pomodoro'] = false;
-        _pomodoroTimer = null;
-        _timeRemaining = 0;
-      });
+    _pomodoroTimer?.cancel();
+    setState(() {
+      _tasks[index]['pomodoro'] = false;
+      _pomodoroTimer = null;
+      _timeRemaining = 0;
+    });
+  }
+
+void _toggleTaskCompletion(int index) {
+  setState(() {
+    _tasks[index]['completed'] = !_tasks[index]['completed'];
+    
+    // Increase or decrease count, ensuring it never goes below zero
+    if (_tasks[index]['completed']) {
+      _completedTaskCount++;
+    } else if (_completedTaskCount > 0) {
+      _completedTaskCount--;
     }
-  }
 
-  String _formatTime(int seconds) {
-    int minutes = seconds ~/ 60;
-    int remainingSeconds = seconds % 60;
-    return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
+    // Award streak point for every 5 tasks completed
+    if (_completedTaskCount == 5) {
+      _streakPoints++;
+      _completedTaskCount = 0; // Reset the count after awarding a streak point
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Congratulations! You earned a streak point! Total Streaks: $_streakPoints'),
+      ));
+    }
+  });
+}
 
-  void _showPomodoroDialog(int index) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Pomodoro Timer for ${_tasks[index]['name']}'),
-              content: Text(
-                'Time Remaining: ${_formatTime(_timeRemaining)}',
-                style: const TextStyle(fontSize: 24),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _stopPomodoro(index);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Stop'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+void _deleteTask(int index) {
+  setState(() {
+    if (_tasks[index]['completed'] && _completedTaskCount > 0) {
+      _completedTaskCount--; // Decrease completed count if completed task is deleted
+    }
+    _tasks.removeAt(index);
+  });
+}
+
+
+  List<Map<String, dynamic>> _filteredTasks() {
+    return _tasks.where((task) => task['name'].toLowerCase().contains(_searchQuery.toLowerCase())).toList();
   }
 
   @override
@@ -143,226 +143,276 @@ class _TodoListPageState extends State<TodoListPage> {
       appBar: AppBar(
         title: const Text('To-Do List'),
         centerTitle: true,
-        
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start, // Align to the left
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           // Title for 'Tasks' aligned to the left and bold
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0),
-            child: Text(
-              'Tasks', // 'Tasks' title under 'To-Do List'
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                return ListTile(
-                  title: Text(
-                    task['name'],
-                    // Highlight the task if it's the current Pomodoro task
-                    style: TextStyle(
-                      fontWeight: index == _currentTaskIndex
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${DateFormat.yMMMd().format(task['date'])} at ${task['time'].format(context)}',
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.timer),
-                    onPressed: () {
-                      if (!task['pomodoro']) {
-                        _startPomodoro(index);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('Pomodoro started for ${task['name']}'),
-                        ));
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(
-                              'Pomodoro already running for ${task['name']}'),
-                        ));
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
           Padding(
-            
+  padding: const EdgeInsets.all(16.0),
+  child: TextField(
+    controller: _searchController,
+    decoration: InputDecoration(
+      hintText: 'Search tasks...',
+      prefixIcon: const Icon(Icons.search),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.green, width: 2.0),
+      ),
+    ),
+    onChanged: (value) {
+      setState(() {
+        _searchQuery = value;
+      });
+    },
+  ),
+),
+
+   // Task completion rate display with dynamic color
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Text(
+            'Tasks (Completed: $_completedTaskCount / 5)',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: _completedTaskCount > 0 ? Colors.green : Colors.red, // Dynamic color based on the count
+            ),
+          ),
+        ),
+Expanded(
+  child: ListView.builder(
+    itemCount: _filteredTasks().length,
+    itemBuilder: (context, index) {
+      final task = _filteredTasks()[index];
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add margin between items
+        decoration: BoxDecoration(
+          color: Colors.green.shade50, // Light green background color
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+          border: Border.all(
+            color: Colors.green, // Green border color
+            width: 2, // Border width
+          ),
+        ),
+        child: ListTile(
+          leading: Checkbox(
+            value: task['completed'],
+            onChanged: (value) {
+              _toggleTaskCompletion(index);
+            },
+          ),
+          title: Text(
+            task['name'],
+            style: TextStyle(
+              fontWeight: index == _currentTaskIndex ? FontWeight.bold : FontWeight.normal,
+              decoration: task['completed'] ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          subtitle: Text(
+            '${DateFormat.yMMMd().format(task['date'])} at ${task['time'].format(context)}',
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.timer),
+                onPressed: () {
+                  if (!task['pomodoro']) {
+                    _startPomodoro(index);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Pomodoro started for ${task['name']}'),
+                    ));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Pomodoro already running for ${task['name']}'),
+                    ));
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                color: Colors.red, // Red color for the delete button
+                onPressed: () {
+                  _deleteTask(index);
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  ),
+),
+
+          Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
                 _showTaskCreationSheet();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:  const Color.fromARGB(255, 222, 255, 183), // Sets the button background to light green
-                foregroundColor: Colors.black, // Sets the text color to black
+                backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                minimumSize: const Size(
-                    double.infinity, 50), // Full width rectangular button
-                     elevation: 5, // Adds shadow depth
-                     shadowColor: Colors.grey.withOpacity(0.5), // Shadow color and transparency
+                minimumSize: const Size(double.infinity, 50),
+                elevation: 5,
+                shadowColor: Colors.grey.withOpacity(0.5),
               ),
               child: const Text(
                 '+ Create a Task',
-                style: TextStyle(
-                fontWeight: FontWeight.bold, // Makes the text bold    
-                ),
-              
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
 
   void _showTaskCreationSheet() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true, // Allows it to expand to almost full screen
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(20), // Rounded corners for the top of the sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
       ),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        expand: false, // Prevents the sheet from covering the entire screen
-        builder: (context, scrollController) {
-          return Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: const BoxDecoration(
-              color: Colors.green, // Green background for the box
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(20),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: const BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
               ),
-            ),
-            child: SingleChildScrollView(
-              controller: scrollController, // Allows scrolling if needed
-              child: Column(
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Details',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Task Name',
+                        labelStyle: const TextStyle(color: Color.fromRGBO(45, 94, 62, 1)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _notesController,
+                      decoration: InputDecoration(
+                        labelText: 'Notes',
+                        labelStyle: const TextStyle(color: Color.fromRGBO(45, 94, 62, 1)),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _pickDate,
+                            child: Text(_selectedDate != null
+                                ? DateFormat.yMMMd().format(_selectedDate!)
+                                : 'Pick Date'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _pickTime,
+                            child: Text(
+                                _selectedTime != null ? _selectedTime!.format(context) : 'Pick Time'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom
+                            (backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                            foregroundColor: Colors.black,),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: _saveTask,
+                          style: ElevatedButton.styleFrom
+                           (backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                            foregroundColor: Colors.black,),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showPomodoroDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pomodoro Timer'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Details title in the center
-                  const Text(
-                    'Details',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text('Time remaining: ${(_timeRemaining ~/ 60).toString().padLeft(2, '0')}:${(_timeRemaining % 60).toString().padLeft(2, '0')}'),
                   const SizedBox(height: 20),
-
-                  TextField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Task Name',
-                     labelStyle: TextStyle(color: const Color.fromRGBO(45, 94, 62, 1)), //text color in field
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10), // Rounded corners   
-                      ),
-
-                      
-                      // Shadow effect
-                      enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                     borderSide: const BorderSide(color: Colors.transparent),
-                        
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _notesController,
-                    decoration: InputDecoration(
-                      labelText: 'Notes',
-                      labelStyle: TextStyle(color: const Color.fromRGBO(45, 94, 62, 1)), //text color in field
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.transparent),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _pickDate,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color.fromRGBO(45, 94, 62, 1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('Pick Date'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _pickTime,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color.fromRGBO(45, 94, 62, 1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const Text('Pick Time'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Close the sheet on cancel
-                        },
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _saveTask,
-                        child: const Text(
-                          'Done',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
+                  ElevatedButton(
+                    onPressed: () {
+                      _stopPomodoro(index);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Stop Timer'),
                   ),
                 ],
-              ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 }
