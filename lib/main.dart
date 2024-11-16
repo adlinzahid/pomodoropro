@@ -6,13 +6,15 @@ import 'splashscreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:pomodoro_pro/calendar_event.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+      const ProviderScope(child: MyApp())); // Wrap the app with ProviderScope
 }
 
 class MyApp extends StatelessWidget {
