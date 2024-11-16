@@ -3,6 +3,9 @@ import 'todo_page.dart'; // Import the todo_page.dart file
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'splashscreen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:intl/intl.dart'; // For date formatting
+import 'package:pomodoro_pro/calendar_event.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner:false,
+      debugShowCheckedModeBanner: false,
       title: 'Pomodoro Pro',
       theme: ThemeData(),
       home: SplashScreen(), //app will first show splash screen
@@ -79,7 +82,11 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: Icon(Icons.calendar_month, color: Colors.green[900]),
               iconSize: 31.0,
               onPressed: () {
-                print('Calendar Clicked');
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            CalendarEventPage())); // Navigate to the calendar_schedule page
               },
             ),
           ),
@@ -114,35 +121,47 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// Define the new HomePage widget with the clickable box and sign-up button
+// Define the new HomePage widget with task fetching and display functionality
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  // Fetch tasks from Firebase Firestore
+  Stream<QuerySnapshot> getTodayTasks() {
+    final today = DateTime.now();
+    final todayStart = DateTime(today.year, today.month, today.day);
+    final tomorrowStart = todayStart.add(const Duration(days: 1));
+
+    // Query for tasks where 'date' is today
+    return FirebaseFirestore.instance
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: todayStart)
+        .where('date', isLessThan: tomorrowStart)
+        .snapshots();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Align content to the left
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(10.0), // Space from AppBar
+          padding: const EdgeInsets.all(10.0),
           child: GestureDetector(
             onTap: () {
-              // Define the action on tap here
               print('Box Clicked');
             },
             child: Container(
-              width: 400.0, // Width of the box
-              height: 200.0, // Height of the box
+              width: 400.0,
+              height: 200.0,
               decoration: BoxDecoration(
-                color: const Color.fromARGB(
-                    255, 101, 181, 103), // Background color of the box
-                borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                color: const Color.fromARGB(255, 101, 181, 103),
+                borderRadius: BorderRadius.circular(8.0),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
                     spreadRadius: 3,
                     blurRadius: 5,
-                    offset: Offset(0, 3), // Changes position of shadow
+                    offset: Offset(0, 3),
                   ),
                 ],
               ),
@@ -156,7 +175,7 @@ class HomePage extends StatelessWidget {
                       fontSize: 45.0,
                     ),
                   ),
-                  SizedBox(height: 10.0), // Space between texts
+                  SizedBox(height: 10.0),
                   Text(
                     'Current Streak',
                     style: TextStyle(
@@ -170,8 +189,7 @@ class HomePage extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(
-              left: 16.0, top: 20.0), // Align to the left like "Welcome"
+          padding: const EdgeInsets.only(left: 16.0, top: 20.0),
           child: Row(
             children: [
               const Text(
@@ -187,6 +205,40 @@ class HomePage extends StatelessWidget {
                 },
               ),
             ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: getTodayTasks(), // Fetch tasks from Firebase
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final todayTasks = snapshot.data!.docs;
+              if (todayTasks.isEmpty) {
+                return const Center(child: Text('No tasks for today!'));
+              }
+
+              return ListView.builder(
+                itemCount: todayTasks.length,
+                itemBuilder: (context, index) {
+                  final task = todayTasks[index];
+                  final taskDate = (task['date'] as Timestamp).toDate();
+                  final taskTime = task['time'];
+                  return ListTile(
+                    title: Text(task['name']),
+                    subtitle: Text(
+                      '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ),
       ],
