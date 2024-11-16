@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:async'; // For the countdown timer
+import 'dart:async';
 
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
@@ -11,20 +11,22 @@ class TodoListPage extends StatefulWidget {
 }
 
 class _TodoListPageState extends State<TodoListPage> {
+  // underscore meaning its a private class
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   Timer? _pomodoroTimer;
   int _timeRemaining = 0;
   final int _pomodoroDuration = 25 * 60;
   int _currentTaskIndex = -1;
+  String _searchQuery = '';
+  int _completedTaskCount = 0;
+  int _streakPoints = 0;
 
-  // Fetch tasks from Firebase Firestore
-  Stream<QuerySnapshot> getTasks() {
-    return FirebaseFirestore.instance.collection('tasks').snapshots();
-  }
-
+  // Initialize _tasks as an empty list
+  List<Map<String, dynamic>> _tasks = [];
   Future<void> _pickDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -51,38 +53,91 @@ class _TodoListPageState extends State<TodoListPage> {
     }
   }
 
-  void _saveTask() async {
-    if (_nameController.text.isEmpty ||
-        _selectedDate == null ||
-        _selectedTime == null) {
+  void _saveTask() {
+    if (_nameController.text.isEmpty || _selectedDate == null || _selectedTime == null) {
       return;
     }
-
-    final taskData = {
-      'name': _nameController.text,
-      'notes': _notesController.text,
-      'date': _selectedDate,
-      'time': _selectedTime?.format(context),
-      'pomodoro': false,
-    };
-
-    try {
-      await FirebaseFirestore.instance.collection('tasks').add(taskData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task saved successfully!')),
-      );
-      _nameController.clear();
-      _notesController.clear();
-      setState(() {
-        _selectedDate = null;
-        _selectedTime = null;
+    setState(() {
+      _tasks.add({
+        'name': _nameController.text,
+        'notes': _notesController.text,
+        'date': _selectedDate,
+        'time': _selectedTime,
+        'pomodoro': false,
+        'completed': false,
       });
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving task: $e')),
-      );
+    });
+    _nameController.clear();
+    _notesController.clear();
+    _selectedDate = null;
+    _selectedTime = null;
+    Navigator.pop(context);
+  }
+
+  void _startPomodoro(int index) {
+    setState(() {
+      _currentTaskIndex = index;
+      _tasks[index]['pomodoro'] = true;
+      _timeRemaining = _pomodoroDuration;
+    });
+    _pomodoroTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_timeRemaining > 0) {
+          _timeRemaining--;
+        } else {
+          _stopPomodoro(index);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Pomodoro for ${_tasks[index]['name']} finished!'),
+          ));
+        }
+      });
+    });
+    _showPomodoroDialog(index);
+  }
+
+  void _stopPomodoro(int index) {
+    _pomodoroTimer?.cancel();
+    setState(() {
+      _tasks[index]['pomodoro'] = false;
+      _pomodoroTimer = null;
+      _timeRemaining = 0;
+    });
+  }
+
+void _toggleTaskCompletion(int index) {
+  setState(() {
+    _tasks[index]['completed'] = !_tasks[index]['completed'];
+    
+    // Increase or decrease count, ensuring it never goes below zero
+    if (_tasks[index]['completed']) {
+      _completedTaskCount++;
+    } else if (_completedTaskCount > 0) {
+      _completedTaskCount--;
     }
+
+    // Award streak point for every 5 tasks completed
+    if (_completedTaskCount == 5) {
+      _streakPoints++;
+      _completedTaskCount = 0; // Reset the count after awarding a streak point
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Congratulations! You earned a streak point! Total Streaks: $_streakPoints'),
+      ));
+    }
+  });
+}
+
+void _deleteTask(int index) {
+  setState(() {
+    if (_tasks[index]['completed'] && _completedTaskCount > 0) {
+      _completedTaskCount--; // Decrease completed count if completed task is deleted
+    }
+    _tasks.removeAt(index);
+  });
+}
+
+
+  List<Map<String, dynamic>> _filteredTasks() {
+    return _tasks.where((task) => task['name'].toLowerCase().contains(_searchQuery.toLowerCase())).toList();
   }
 
   @override
@@ -95,52 +150,106 @@ class _TodoListPageState extends State<TodoListPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(left: 16.0),
-            child: Text(
-              'Tasks',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+          Padding(
+  padding: const EdgeInsets.all(16.0),
+  child: TextField(
+    controller: _searchController,
+    decoration: InputDecoration(
+      hintText: 'Search tasks...',
+      prefixIcon: const Icon(Icons.search),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.green, width: 2.0),
+      ),
+    ),
+    onChanged: (value) {
+      setState(() {
+        _searchQuery = value;
+      });
+    },
+  ),
+),
+
+   // Task completion rate display with dynamic color
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Text(
+            'Tasks (Completed: $_completedTaskCount / 5)',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: _completedTaskCount > 0 ? Colors.green : Colors.red, // Dynamic color based on the count
+            ),
+          ),
+        ),
+Expanded(
+  child: ListView.builder(
+    itemCount: _filteredTasks().length,
+    itemBuilder: (context, index) {
+      final task = _filteredTasks()[index];
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16), // Add margin between items
+        decoration: BoxDecoration(
+          color: Colors.green.shade50, // Light green background color
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+          border: Border.all(
+            color: Colors.green, // Green border color
+            width: 2, // Border width
+          ),
+        ),
+        child: ListTile(
+          leading: Checkbox(
+            value: task['completed'],
+            onChanged: (value) {
+              _toggleTaskCompletion(index);
+            },
+          ),
+          title: Text(
+            task['name'],
+            style: TextStyle(
+              fontWeight: index == _currentTaskIndex ? FontWeight.bold : FontWeight.normal,
+              decoration: task['completed'] ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          subtitle: Text(
+            '${DateFormat.yMMMd().format(task['date'])} at ${task['time'].format(context)}',
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.timer),
+                onPressed: () {
+                  if (!task['pomodoro']) {
+                    _startPomodoro(index);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Pomodoro started for ${task['name']}'),
+                    ));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Pomodoro already running for ${task['name']}'),
+                    ));
+                  }
+                },
               ),
-            ),
+              IconButton(
+                icon: const Icon(Icons.delete),
+                color: Colors.red, // Red color for the delete button
+                onPressed: () {
+                  _deleteTask(index);
+                },
+              ),
+            ],
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: getTasks(), // Fetch tasks from Firebase
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+        ),
+      );
+    },
+  ),
+),
 
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final tasks = snapshot.data!.docs;
-                return ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    final taskDate = (task['date'] as Timestamp).toDate();
-                    final taskTime = task['time'];
-                    return ListTile(
-                      title: Text(task['name']),
-                      subtitle: Text(
-                        '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.timer),
-                        onPressed: () {
-                          // Your Pomodoro logic here
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
@@ -161,11 +270,10 @@ class _TodoListPageState extends State<TodoListPage> {
                 '+ Create a Task',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+        ]
+    ));
   }
 
   void _showTaskCreationSheet() {
@@ -207,17 +315,11 @@ class _TodoListPageState extends State<TodoListPage> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Task Name',
-                        labelStyle: TextStyle(
-                            color: const Color.fromRGBO(45, 94, 62, 1)),
+                        labelStyle: const TextStyle(color: Color.fromRGBO(45, 94, 62, 1)),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: Colors.transparent),
                         ),
                       ),
                     ),
@@ -226,17 +328,11 @@ class _TodoListPageState extends State<TodoListPage> {
                       controller: _notesController,
                       decoration: InputDecoration(
                         labelText: 'Notes',
-                        labelStyle: TextStyle(
-                            color: const Color.fromRGBO(45, 94, 62, 1)),
+                        labelStyle: const TextStyle(color: Color.fromRGBO(45, 94, 62, 1)),
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: Colors.transparent),
                         ),
                       ),
                     ),
@@ -246,53 +342,40 @@ class _TodoListPageState extends State<TodoListPage> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: _pickDate,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor:
-                                  const Color.fromRGBO(45, 94, 62, 1),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text('Pick Date'),
+                            child: Text(_selectedDate != null
+                                ? DateFormat.yMMMd().format(_selectedDate!)
+                                : 'Pick Date'),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
                             onPressed: _pickTime,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor:
-                                  const Color.fromRGBO(45, 94, 62, 1),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: const Text('Pick Time'),
+                            child: Text(
+                                _selectedTime != null ? _selectedTime!.format(context) : 'Pick Time'),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        TextButton(
+                        ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
                           },
-                          child: const Text(
-                            'Cancel',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          style: ElevatedButton.styleFrom
+                            (backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                            foregroundColor: Colors.black,),
+                          child: const Text('Cancel'),
                         ),
-                        TextButton(
+                        ElevatedButton(
                           onPressed: _saveTask,
-                          child: const Text(
-                            'Done',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          style: ElevatedButton.styleFrom
+                           (backgroundColor: const Color.fromARGB(255, 222, 255, 183),
+                            foregroundColor: Colors.black,),
+                          child: const Text('Done'),
                         ),
                       ],
                     ),
@@ -301,6 +384,35 @@ class _TodoListPageState extends State<TodoListPage> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showPomodoroDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pomodoro Timer'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Time remaining: ${(_timeRemaining ~/ 60).toString().padLeft(2, '0')}:${(_timeRemaining % 60).toString().padLeft(2, '0')}'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      _stopPomodoro(index);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Stop Timer'),
+                  ),
+                ],
+              );
+            },
+          ),
         );
       },
     );
