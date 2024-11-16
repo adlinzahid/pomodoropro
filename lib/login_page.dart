@@ -17,6 +17,11 @@ class _LoginPageState extends State<LoginPage> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
+
+  void _onEntered(String value) {
+    print('Entered: $value');
+  }
 
   @override
   void dispose() {
@@ -157,6 +162,8 @@ class _LoginPageState extends State<LoginPage> {
           borderSide: BorderSide.none,
         ),
       ),
+      textInputAction: TextInputAction.next,
+      onSubmitted: _onEntered,
     );
   }
 
