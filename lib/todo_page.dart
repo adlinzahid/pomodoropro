@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -78,7 +79,13 @@ class TodoListPage extends HookConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TO-DO LIST', style: TextStyle(fontSize: 26)),
+      title: Text(
+      'To-Do List',
+    style: GoogleFonts.quicksand( 
+      fontSize: 25, // Set the font size
+      fontWeight: FontWeight.bold, // Set the font weight
+    ),
+  ),
         centerTitle: true,
       ),
       body: Column(
@@ -93,12 +100,17 @@ class TodoListPage extends HookConsumerWidget {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Colors.green, width: 2.0),
+      ),
               ),
               onChanged: (value) {
                 searchQuery.value = value;
               },
             ),
           ),
+
           Expanded(
             child: tasksAsyncValue.when(
               data: (snapshot) {
@@ -112,112 +124,267 @@ class TodoListPage extends HookConsumerWidget {
                         .contains(searchQuery.value.toLowerCase()))
                     .toList();
 
-                return ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    final taskDate =
-                        (task['date'] as Timestamp).toDate(); // Firebase date
-                    final taskTime = task['time'];
-                    final taskCompleted = task['completed'] ?? false;
+return ListView.builder(
+  itemCount: tasks.length,
+  itemBuilder: (context, index) {
+    final task = tasks[index];
+    final taskDate = (task['date'] as Timestamp).toDate(); // Firebase date
+    final taskTime = task['time'];
+    final taskCompleted = task['completed'] ?? false;
 
-                    return ListTile(
-                      leading: Checkbox(
-                        value: taskCompleted,
-                        onChanged: (value) async {
-                          await FirebaseFirestore.instance
-                              .collection('tasks')
-                              .doc(task['id'])
-                              .update({'completed': value});
-                        },
-                      ),
-                      title: Text(
-                        task['name'],
-                        style: TextStyle(
-                          decoration:
-                              taskCompleted ? TextDecoration.lineThrough : null,
-                        ),
-                      ),
-                      subtitle: Text(
-                          '${DateFormat.yMMMd().format(taskDate)} at $taskTime'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          await FirebaseFirestore.instance
-                              .collection('tasks')
-                              .doc(task['id'])
-                              .delete();
-                        },
-                      ),
-                    );
-                  },
-                );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9), // Soft green background
+          border: Border.all(color: Colors.green, width: 2.0),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ListTile(
+          leading: Checkbox(
+            value: taskCompleted,
+            onChanged: (value) async {
+              await FirebaseFirestore.instance
+                  .collection('tasks')
+                  .doc(task['id'])
+                  .update({'completed': value});
+            },
+          ),
+          title: Text(
+            task['name'],
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color.fromARGB(255, 0, 0, 0),
+              decoration: taskCompleted ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          subtitle: Text(
+            '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+            style: TextStyle(color: const Color.fromARGB(255, 2, 56, 14)),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () async {
+              await FirebaseFirestore.instance
+                  .collection('tasks')
+                  .doc(task['id'])
+                  .delete();
+            },
+          ),
+        ),
+      ),
+    );
+  },
+);
+
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                        top: 20,
-                        left: 16,
-                        right: 16,
+Padding(
+  padding: const EdgeInsets.all(16.0),
+  child: ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color.fromARGB(255, 215, 253, 179), // Green background
+      foregroundColor: Colors.black, // Black text
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20), // Rounded corners
+      ),
+      minimumSize: Size(double.infinity, 50), // Full width button
+    ),
+    onPressed: () {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              top: 20,
+              left: 16,
+              right: 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Stack for Cancel, Save, and Details Text
+                Stack(
+                  children: [
+                    // Cancel Button (Top Left)
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Cancel
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey, // Grey background for cancel
+                          foregroundColor: Colors.white, // White text
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 20,
+                          ),
+                        ),
+                        child: const Text('Cancel'),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                    ),
+                    // Save Button (Top Right)
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: ElevatedButton(
+                        onPressed: saveTask,
+                        style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.grey,  // Grey background for save
+                          foregroundColor: Colors.white, // White text
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 20,
+                          ),
+                        ),
+                        child: const Text('Save Task'),
+                      ),
+                    ),
+                    // Details Text
+                    Align(
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Details',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,  // Bold version of Quicksand
+                          color: Color.fromARGB(255, 10, 10, 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40), // Space between buttons and input fields
+                
+                // Task Name Input Box
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white, // White background for input fields
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Task Name',
+                      border: InputBorder.none, // No border
+                      contentPadding: EdgeInsets.all(16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10), // Space between Task Name and Notes
+                
+                // Notes Input Box
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white, // White background for input fields
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Notes',
+                      border: InputBorder.none, // No border
+                      contentPadding: EdgeInsets.all(16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10), // Space between Notes and Date/Time buttons
+                
+                // Row for Date and Time Buttons (Aligned Bottom)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Pick Date Button (Left)
+                    ElevatedButton(
+                      onPressed: pickDate,
+                      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 55, 190, 37), // Change the background color here
+        foregroundColor: Colors.white, // Change the text color here
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Optional: rounded corners
+        ),
+      ),
+                      child: Row(
                         children: [
-                          TextField(
-                            controller: nameController,
-                            decoration:
-                                const InputDecoration(labelText: 'Task Name'),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: notesController,
-                            decoration:
-                                const InputDecoration(labelText: 'Notes'),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              ElevatedButton(
-                                onPressed: pickDate,
-                                child: const Text('Pick Date'),
-                              ),
-                              const SizedBox(width: 10),
-                              ElevatedButton(
-                                onPressed: pickTime,
-                                child: const Text('Pick Time'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: saveTask,
-                            child: const Text('Save Task'),
-                          ),
+                          const Icon(Icons.calendar_today),
+                          const SizedBox(width: 5),
+                          const Text('Pick Date'),
                         ],
                       ),
-                    );
-                  },
-                );
-              },
-              child: const Text('+ Create Task'),
+                    ),
+                    // Pick Time Button (Right)
+                    ElevatedButton(
+                      onPressed: pickTime,
+                       style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 55, 190, 37), // Change the background color here
+        foregroundColor: Colors.white, // Change the text color here
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Optional: rounded corners
+        ),
+      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 5),
+                          const Text('Pick Time'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
             ),
-          ),
+          );
+        },
+      );
+    },
+    child: Text(
+      '+ Create a Task',
+      style: GoogleFonts.quicksand(
+        fontSize: 15,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  ),
+),
+
+
+
         ],
       ),
     );
