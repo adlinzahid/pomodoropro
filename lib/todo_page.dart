@@ -170,15 +170,66 @@ return ListView.builder(
             '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
             style: TextStyle(color: const Color.fromARGB(255, 2, 56, 14)),
           ),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () async {
-              await FirebaseFirestore.instance
-                  .collection('tasks')
-                  .doc(task['id'])
-                  .delete();
-            },
-          ),
+trailing: IconButton(
+  icon: const Icon(Icons.delete, color: Colors.red),
+  onPressed: () async {
+    // Show confirmation dialog before deletion
+    final bool? confirmed = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this task?'),
+          actionsAlignment: MainAxisAlignment.spaceBetween, // Align buttons left and right
+          actions: [
+            // Cancel Button (Left)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // User canceled
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.grey[300], // Light grey background
+                foregroundColor: Colors.black, // Black text
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('Cancel'),
+            ),
+            // Delete Button (Right)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // User confirmed
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red, // Red background
+                foregroundColor: Colors.white, // White text
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text('Delete task'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      // User confirmed deletion
+      try {
+        await FirebaseFirestore.instance
+            .collection('tasks')
+            .doc(task['id'])
+            .delete();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task deleted successfully!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting task: $e')),
+        );
+      }
+    }
+  },
+),
         ),
       ),
     );
