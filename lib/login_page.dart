@@ -33,7 +33,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green.shade50, // Light green background
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 60.0),
         child: Column(
@@ -71,6 +70,7 @@ class _LoginPageState extends State<LoginPage> {
               hintText: 'Password',
               icon: Icons.lock,
               obscureText: true,
+              onSubmitted: (_) => _login(),
             ),
             const SizedBox(height: 40),
             // Login button
@@ -147,6 +147,7 @@ class _LoginPageState extends State<LoginPage> {
     required IconData icon,
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
+    void Function(String)? onSubmitted,
   }) {
     return TextField(
       controller: controller,
@@ -163,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       textInputAction: TextInputAction.next,
-      onSubmitted: _onEntered,
+      onSubmitted: onSubmitted,
     );
   }
 

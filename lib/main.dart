@@ -59,41 +59,44 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Padding(
-          padding: EdgeInsets.only(left: 16.0, top: 20.0),
-          child: Text(
-            "Welcome",
-            style: TextStyle(fontSize: 35.0),
-          ),
-        ),
-        actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(top: 20.0, left: 10.0),
-            child: IconButton(
-              icon: Icon(Icons.military_tech_outlined, color: Colors.amber),
-              iconSize: 31.0,
-              onPressed: () {
-                print('Reward Clicked');
-              },
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(top: 20.0, right: 18.0),
-            child: IconButton(
-              icon: Icon(Icons.calendar_month, color: Colors.green[900]),
-              iconSize: 31.0,
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            CalendarEventPage())); // Navigate to the calendar_schedule page
-              },
-            ),
-          ),
-        ],
-      ),
+      appBar: _selectedIndex == 0
+          ? AppBar(
+              title: Padding(
+                padding: EdgeInsets.only(left: 16.0, top: 20.0),
+                child: Text(
+                  "Welcome",
+                  style: TextStyle(fontSize: 35.0),
+                ),
+              ),
+              actions: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(top: 20.0, left: 10.0),
+                  child: IconButton(
+                    icon:
+                        Icon(Icons.military_tech_outlined, color: Colors.amber),
+                    iconSize: 31.0,
+                    onPressed: () {
+                      print('Reward Clicked');
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 20.0, right: 18.0),
+                  child: IconButton(
+                    icon: Icon(Icons.calendar_month, color: Colors.green[900]),
+                    iconSize: 31.0,
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  CalendarEventPage())); // Navigate to the calendar_schedule page
+                    },
+                  ),
+                ),
+              ],
+            )
+          : null, //No app bar for other pages
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -153,7 +156,7 @@ class HomePage extends StatelessWidget {
               print('Box Clicked');
             },
             child: Container(
-              width: 400.0,
+              width: double.infinity,
               height: 200.0,
               decoration: BoxDecoration(
                 color: const Color.fromARGB(255, 101, 181, 103),
@@ -232,10 +235,57 @@ class HomePage extends StatelessWidget {
                   final task = todayTasks[index];
                   final taskDate = (task['date'] as Timestamp).toDate();
                   final taskTime = task['time'];
+                  final taskNotes = task['notes'] ??
+                      'No notes available'; // Use 'No notes available' if no notes exist
+
                   return ListTile(
-                    title: Text(task['name']),
-                    subtitle: Text(
-                      '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment
+                          .spaceBetween, // Align the text and icon on opposite ends
+                      children: [
+                        Text(task['name'], style: TextStyle(fontSize: 16.0)),
+                        IconButton(
+                          icon: Icon(Icons.info_outline),
+                          onPressed: () {
+                            // Show an AlertDialog with the task notes
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text('Task Notes'),
+                                  content: Text(taskNotes),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context)
+                                            .pop(); // Close the dialog
+                                      },
+                                      child: Text(
+                                        'Close',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: const Color.fromARGB(
+                                                255, 134, 189, 71)),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+                        ),
+                        SizedBox(
+                            height:
+                                4.0), // Add some space between date/time and notes
+                      ],
                     ),
                   );
                 },
