@@ -159,63 +159,131 @@ class TodoListPage extends HookConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(20)),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(10)),
+                    ),
+                    builder: (context) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom,
+                          top: 20,
+                          left: 16,
+                          right: 16,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: nameController,
+                              decoration:
+                                  const InputDecoration(labelText: 'Task Name'),
+                            ),
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: notesController,
+                              decoration:
+                                  const InputDecoration(labelText: 'Notes'),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                    child: Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: pickDate,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    child: const Text('Pick Date'),
+                                  ),
+                                )),
+                                Expanded(
+                                    child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: ElevatedButton(
+                                    onPressed: pickTime,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    child: const Text('Pick Time'),
+                                  ),
+                                ))
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 20.0),
+                                child: ElevatedButton(
+                                  onPressed: saveTask,
+                                  style: ButtonStyle(
+                                    backgroundColor:
+                                        WidgetStateProperty.resolveWith(
+                                            (states) {
+                                      if (states
+                                          .contains(WidgetState.hovered)) {
+                                        return const Color.fromARGB(
+                                            255, 136, 211, 138); // Hover color
+                                      } else if (states
+                                          .contains(WidgetState.pressed)) {
+                                        return const Color.fromARGB(255, 116,
+                                            191, 118); // Pressed color
+                                      }
+                                      return const Color.fromARGB(
+                                          255, 156, 221, 158); // Default color
+                                    }),
+                                    foregroundColor:
+                                        WidgetStateProperty.all(Colors.white),
+                                    shape: WidgetStateProperty.all(
+                                      RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                    ),
+                                    padding: WidgetStateProperty.all(
+                                      const EdgeInsets.symmetric(
+                                          vertical: 16.0),
+                                    ),
+                                  ),
+                                  child: const Text('Save Task'),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                        top: 20,
-                        left: 16,
-                        right: 16,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextField(
-                            controller: nameController,
-                            decoration:
-                                const InputDecoration(labelText: 'Task Name'),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: notesController,
-                            decoration:
-                                const InputDecoration(labelText: 'Notes'),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              ElevatedButton(
-                                onPressed: pickDate,
-                                child: const Text('Pick Date'),
-                              ),
-                              const SizedBox(width: 10),
-                              ElevatedButton(
-                                onPressed: pickTime,
-                                child: const Text('Pick Time'),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: saveTask,
-                            child: const Text('Save Task'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              child: const Text('+ Create Task'),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                ),
+                child: const Text('+ Create Task'),
+              ),
             ),
           ),
         ],
