@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'todo_page.dart'; // Import the todo_page.dart file
+import 'target_mark.dart'; //Import the target_mark.dart file
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'splashscreen.dart';
@@ -48,7 +49,8 @@ class _MyHomePageState extends State<MyHomePage> {
     Center(
         child:
             Text('Group Collaboration Page', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Calculator Page', style: TextStyle(fontSize: 24))),
+    TargetMarkCalculator(), // Links to the TargetMarkPage in `target_mark.dart`
+    
   ];
 
   void _onItemTapped(int index) {

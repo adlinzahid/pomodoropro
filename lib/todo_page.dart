@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pomodoro_timer_page.dart'; //Import the target_mark.dart file
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -12,22 +13,6 @@ final taskStreamProvider = StreamProvider.autoDispose((ref) {
 class TodoListPage extends HookConsumerWidget {
   const TodoListPage({Key? key}) : super(key: key);
 
-//Pomodoro Timer start function
-  Future<void> startPomodoro(String taskId) async {
-    int countdown = 25 * 60; // 25 minutes in seconds
-    while (countdown > 0) {
-      await Future.delayed(const Duration(seconds: 1));
-      countdown--;
-      await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
-        'pomodoro': countdown,
-      });
-    }
-    // Update task when timer finishes
-    await FirebaseFirestore.instance.collection('tasks').doc(taskId).update({
-      'pomodoro': 0, // Timer finished
-      'completed': true, // Mark task as completed
-    });
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -124,8 +109,11 @@ class TodoListPage extends HookConsumerWidget {
               ),
               onChanged: (value) {
                 searchQuery.value = value;
-              },
-            ),
+              },   
+            ),  
+            
+
+
           ),
           Expanded(
             child: tasksAsyncValue.when(
@@ -167,106 +155,102 @@ class TodoListPage extends HookConsumerWidget {
                           ],
                         ),
                         child: ListTile(
-                          leading: Checkbox(
-                            value: taskCompleted,
-                            onChanged: (value) async {
-                              await FirebaseFirestore.instance
-                                  .collection('tasks')
-                                  .doc(task['id'])
-                                  .update({'completed': value});
-                            },
-                          ),
-                          title: Text(
-                            task['name'],
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: const Color.fromARGB(255, 0, 0, 0),
-                              decoration: taskCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
-                            style: TextStyle(
-                                color: const Color.fromARGB(255, 2, 56, 14)),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
-                              // Show confirmation dialog before deletion
-                              final bool? confirmed = await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text('Confirm Delete'),
-                                    content: const Text(
-                                        'Are you sure you want to delete this task?'),
-                                    actionsAlignment: MainAxisAlignment
-                                        .spaceBetween, // Align buttons left and right
-                                    actions: [
-                                      // Cancel Button (Left)
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context)
-                                              .pop(false); // User canceled
-                                        },
-                                        style: TextButton.styleFrom(
-                                          backgroundColor: Colors.grey[
-                                              300], // Light grey background
-                                          foregroundColor:
-                                              Colors.black, // Black text
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 8),
-                                        ),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      // Delete Button (Right)
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context)
-                                              .pop(true); // User confirmed
-                                        },
-                                        style: TextButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.red, // Red background
-                                          foregroundColor:
-                                              Colors.white, // White text
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 8),
-                                        ),
-                                        child: const Text('Delete task'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
+  leading: Checkbox(
+    value: taskCompleted,
+    onChanged: (value) async {
+      await FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(task['id'])
+          .update({'completed': value});
+    },
+  ),
+  title: Text(
+    task['name'],
+    style: TextStyle(
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      color: const Color.fromARGB(255, 0, 0, 0),
+      decoration: taskCompleted ? TextDecoration.lineThrough : null,
+    ),
+  ),
+  subtitle: Text(
+    '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+    style: TextStyle(color: const Color.fromARGB(255, 2, 56, 14)),
+  ),
+  trailing: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      
+      // Pomodoro Button
+      Container(
+  decoration: BoxDecoration(
+    color: Colors.green, // Green circular background
+    shape: BoxShape.circle, // Ensures the background is circular
+  ),
+  child: IconButton(
+    icon: Icon(
+      Icons.play_arrow, // "Play" icon
+      color: Colors.white, // Icon color is white
+    ),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PomodoroTimerPage(taskName: '', taskDateTime: '',),
+        ),
+      );
+    },
+  ),
+),
 
-                              if (confirmed == true) {
-                                // User confirmed deletion task
-                                try {
-                                  await FirebaseFirestore.instance
-                                      .collection('tasks')
-                                      .doc(task['id'])
-                                      .delete();
+      // Delete Button
+      IconButton(
+        icon: const Icon(Icons.delete, color: Colors.red),
+        onPressed: () async {
+          // Show confirmation dialog before deletion
+          final bool? confirmed = await showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Confirm Delete'),
+                content: const Text('Are you sure you want to delete this task?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Delete task'),
+                  ),
+                ],
+              );
+            },
+          );
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content:
-                                            Text('Task deleted successfully!')),
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text('Error deleting task: $e')),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ),
+          if (confirmed == true) {
+            // User confirmed deletion
+            try {
+              await FirebaseFirestore.instance
+                  .collection('tasks')
+                  .doc(task['id'])
+                  .delete();
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Task deleted successfully!')),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error deleting task: $e')),
+              );
+            }
+          }
+        },
+      ),
+    ],
+  ),
+),
+
                       ),
                     );
                   },
