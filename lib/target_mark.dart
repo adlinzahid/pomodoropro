@@ -8,7 +8,7 @@ void main() {
 }
 
 class TargetMarkCalculator extends StatefulWidget {
-  const TargetMarkCalculator({Key? key}) : super(key: key);
+  const TargetMarkCalculator({super.key});
 
   @override
   State<TargetMarkCalculator> createState() => _TargetMarkCalculatorState();

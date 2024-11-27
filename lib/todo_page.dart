@@ -182,7 +182,8 @@ class TodoListPage extends HookConsumerWidget {
     children: [
       
       // Pomodoro Button
-      Container(
+// Pomodoro Button
+Container(
   decoration: BoxDecoration(
     color: Colors.green, // Green circular background
     shape: BoxShape.circle, // Ensures the background is circular
@@ -196,12 +197,16 @@ class TodoListPage extends HookConsumerWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => PomodoroTimerPage(taskName: '', taskDateTime: '',),
+          builder: (context) => PomodoroTimerPage(
+            taskName: task['name'],
+            taskDateTime: '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+          ),
         ),
       );
     },
   ),
 ),
+
 
       // Delete Button
       IconButton(
