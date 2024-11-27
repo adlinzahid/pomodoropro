@@ -13,6 +13,7 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
   late DateTime _focusedDay;
   late DateTime _selectedDay;
   late CalendarFormat _calendarFormat;
+  Map<DateTime, List<Map<String, dynamic>>> tasksMap = {};
 
   @override
   void initState() {
@@ -20,24 +21,48 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
     _focusedDay = DateTime.now();
     _selectedDay = DateTime.now();
     _calendarFormat = CalendarFormat.month;
+    _fetchAllTasks(); // Fetch tasks for all days on init
   }
 
-  // Function to fetch tasks from Firebase for the selected day
-  Stream<List<Map<String, dynamic>>> _fetchTasksByDate(DateTime date) {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+  // Fetch tasks for multiple days from Firebase
+  Future<void> _fetchAllTasks() async {
+    final startOfDay =
+        DateTime.now().subtract(const Duration(days: 30)); // Start date
+    final endOfDay = DateTime.now().add(const Duration(days: 30)); // End date
 
-    return FirebaseFirestore.instance
+    final snapshot = await FirebaseFirestore.instance
         .collection('tasks')
         .where('date', isGreaterThanOrEqualTo: startOfDay)
         .where('date', isLessThanOrEqualTo: endOfDay)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data() as Map<String, dynamic>,
-                })
-            .toList());
+        .get();
+
+    final tasks = snapshot.docs
+        .map((doc) => {
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            })
+        .toList();
+
+    // Group tasks by date
+    tasksMap.clear();
+    for (var task in tasks) {
+      DateTime taskDate = (task['date'] as Timestamp).toDate();
+      DateTime taskDay = DateTime(taskDate.year, taskDate.month, taskDate.day);
+
+      if (!tasksMap.containsKey(taskDay)) {
+        tasksMap[taskDay] = [];
+      }
+      tasksMap[taskDay]!.add(task);
+    }
+
+    setState(() {}); // Trigger a rebuild after fetching tasks
+  }
+
+  // Check if a specific day has tasks
+  bool _hasTasksForDay(DateTime day) {
+    DateTime normalizedDay = DateTime(day.year, day.month, day.day);
+    return tasksMap.containsKey(normalizedDay) &&
+        tasksMap[normalizedDay]!.isNotEmpty;
   }
 
   @override
@@ -64,6 +89,7 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
                 shape: BoxShape.circle,
               ),
               selectedTextStyle: const TextStyle(color: Colors.white),
+              cellMargin: const EdgeInsets.all(9),
             ),
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             calendarFormat: _calendarFormat,
@@ -83,12 +109,32 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
                 _focusedDay = focusedDay;
               });
             },
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, date, _) {
+                // Display a dot under the date if tasks exist
+                if (_hasTasksForDay(date)) {
+                  return Positioned(
+                    bottom: 1,
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Colors.orange, // Dot color
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
           ),
 
           // Display tasks for the selected day
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _fetchTasksByDate(_selectedDay),
+              stream: _fetchTasksByDate(
+                  _selectedDay), // Stream for selected day's tasks
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -108,10 +154,10 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
                       leading: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(task['time']),
+                          Text(task['time'] ?? 'No time specified'),
                         ],
                       ),
-                      title: Text(task['name']),
+                      title: Text(task['name'] ?? 'No task name'),
                       subtitle: Text(
                         task['notes'] ?? 'No notes available',
                         style: TextStyle(color: Colors.grey),
@@ -125,5 +171,23 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
         ],
       ),
     );
+  }
+
+  // Function to fetch tasks for the selected day
+  Stream<List<Map<String, dynamic>>> _fetchTasksByDate(DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    return FirebaseFirestore.instance
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => {
+                  'id': doc.id,
+                  ...doc.data() as Map<String, dynamic>,
+                })
+            .toList());
   }
 }
