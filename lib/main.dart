@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+//
 import 'todo_page.dart'; // Import the todo_page.dart file
 import 'target_mark.dart'; //Import the target_mark.dart file
 import 'package:firebase_core/firebase_core.dart';
@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:pomodoro_pro/calendar_event.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,46 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
+  String? username; // store the username
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsername(); //fetch the username when the widget is initialized
+  }
+
+  // Fetch the username from Firestore
+  Future<void> _fetchUsername() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            username = userDoc[
+                'username']; // assuming the firestore document has 'username' field
+          });
+        } else {
+          setState(() {
+            username = 'Guest'; // default username
+          });
+        }
+      } catch (e) {
+        print('Error fetching username: $e');
+        setState(() {
+          username = 'Guest';
+        }); // default username
+      }
+    } else {
+      setState(() {
+        username = 'Guest';
+      }); // default username
+    }
+  }
 
   // List of pages to display based on the selected index
   static final List<Widget> _pages = <Widget>[
@@ -67,7 +108,7 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Padding(
                 padding: EdgeInsets.only(left: 16.0, top: 20.0),
                 child: Text(
-                  "Welcome",
+                  "Welcome, ${username ?? 'Loading...'} ", // Display the username when available
                   style: TextStyle(fontSize: 35.0),
                 ),
               ),

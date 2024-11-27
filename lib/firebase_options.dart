@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '867363482583',
     projectId: 'pomodoropro-211',
     authDomain: 'pomodoropro-211.firebaseapp.com',
+    databaseURL: 'https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'pomodoropro-211.firebasestorage.app',
     measurementId: 'G-TQR98R01RR',
   );
@@ -55,6 +56,7 @@ class DefaultFirebaseOptions {
     appId: '1:867363482583:android:9e237af9aaabb01cd7f992',
     messagingSenderId: '867363482583',
     projectId: 'pomodoropro-211',
+    databaseURL: 'https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'pomodoropro-211.firebasestorage.app',
   );
 
@@ -63,6 +65,7 @@ class DefaultFirebaseOptions {
     appId: '1:867363482583:ios:0d9725ed791aa667d7f992',
     messagingSenderId: '867363482583',
     projectId: 'pomodoropro-211',
+    databaseURL: 'https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'pomodoropro-211.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication1',
   );
@@ -72,6 +75,7 @@ class DefaultFirebaseOptions {
     appId: '1:867363482583:ios:0d9725ed791aa667d7f992',
     messagingSenderId: '867363482583',
     projectId: 'pomodoropro-211',
+    databaseURL: 'https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'pomodoropro-211.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication1',
   );
@@ -82,7 +86,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '867363482583',
     projectId: 'pomodoropro-211',
     authDomain: 'pomodoropro-211.firebaseapp.com',
+    databaseURL: 'https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'pomodoropro-211.firebasestorage.app',
     measurementId: 'G-L8PP21MFNM',
   );
+
 }

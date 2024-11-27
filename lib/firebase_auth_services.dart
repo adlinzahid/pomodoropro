@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseAuthServices {
-  final User? user = FirebaseAuth.instance.currentUser;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -23,7 +22,7 @@ class FirebaseAuthServices {
   }
 
   Future<User?> signUpWithEmailAndPassword(
-      String email, String password) async {
+      String email, String password, String username) async {
     try {
       final UserCredential userCredential =
           await _firebaseAuth.createUserWithEmailAndPassword(
@@ -33,6 +32,7 @@ class FirebaseAuthServices {
       // Save user data to Firestore after signup
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
         'email': email,
+        'username': username,
         'created_at': FieldValue.serverTimestamp(),
       });
       return userCredential.user;
@@ -41,6 +41,16 @@ class FirebaseAuthServices {
       print(e.message);
       return null;
     }
+  }
+
+  Future<String?> getUsername() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user != null) {
+      final DocumentSnapshot<Map<String, dynamic>> snapshot =
+          await _firestore.collection('users').doc(user.uid).get();
+      return snapshot.data()!['username'];
+    }
+    return null;
   }
 
   Future<void> signOut() async {

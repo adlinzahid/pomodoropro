@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore package
 import 'package:flutter/material.dart';
 import 'package:pomodoro_pro/firebase_auth_services.dart';
 import 'main.dart'; // Import the main.dart file
@@ -8,12 +9,12 @@ class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SignUpPageState createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuthServices _firebaseAuth = FirebaseAuthServices();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -79,28 +80,7 @@ class _SignUpPageState extends State<SignUpPage> {
             const SizedBox(height: 40),
             // Sign up button
             ElevatedButton(
-              onPressed: () async {
-                final String email = _emailController.text.trim();
-                final String password = _passwordController.text.trim();
-                final String username = _usernameController.text.trim();
-
-                // call the signup method
-                User? user = await _firebaseAuth.signUpWithEmailAndPassword(
-                    email, password);
-                if (user != null) {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              MyHomePage())); // Handle sign-up logic here
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Sign up failed. Please try again.'),
-                    ),
-                  );
-                }
-              },
+              onPressed: _signUp,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -175,20 +155,36 @@ class _SignUpPageState extends State<SignUpPage> {
   void _signUp() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
-    final User? user =
-        await _firebaseAuth.signUpWithEmailAndPassword(email, password);
-    if (user != null) {
-      // Navigate to the home page
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyHomePage()),
-      );
-    } else {
-      // Show an error message
+    final String username = _usernameController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sign up failed. Please try again.'),
-        ),
+        const SnackBar(content: Text('All fields are required.')),
+      );
+      return;
+    }
+
+    try {
+      // Sign up the user with email and password
+      User? user = await _firebaseAuth.signUpWithEmailAndPassword(
+          email, password, username);
+      if (user != null) {
+        // Save user data to Firestore after sign-up
+        await _firestore.collection('users').doc(user.uid).set({
+          'username': username,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // After successful sign-up, navigate to the HomePage
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyHomePage()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Sign up failed: $e')),
       );
     }
   }
