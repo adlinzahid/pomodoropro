@@ -210,7 +210,7 @@ void _showCompletionDialog() async {
             child: Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.green.shade100,
+                color: const Color.fromARGB(255, 211, 245, 212), //shade color of task details
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(color: Colors.green.shade800, width: 2.0),
                 boxShadow: [

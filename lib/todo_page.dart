@@ -112,8 +112,6 @@ class TodoListPage extends HookConsumerWidget {
               },   
             ),  
             
-
-
           ),
           Expanded(
             child: tasksAsyncValue.when(
@@ -217,7 +215,7 @@ Container(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text('Confirm Delete'),
+                title: const Text('Confirm Delete?'),
                 content: const Text('Are you sure you want to delete this task?'),
                 actions: [
                   TextButton(
