@@ -1,28 +1,29 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore package
+import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:pomodoro_pro/firebase_auth_services.dart';
-import 'main.dart'; // Import the main.dart file
+import 'package:pomodoro_pro/services/auth.dart';
+import 'package:pomodoro_pro/widgets/wrapper.dart';
 import 'login_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+  final VoidCallback showLoginPage;
+  const SignUpPage({super.key, required this.showLoginPage});
 
   @override
-  _SignUpPageState createState() => _SignUpPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final FirebaseAuthServices _firebaseAuth = FirebaseAuthServices();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _auth = Auth(); // Create an instance of the Auth class
 
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -31,8 +32,6 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          Colors.green.shade50, // Light green background for a fresh look
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 60.0),
         child: Column(
@@ -49,7 +48,7 @@ class _SignUpPageState extends State<SignUpPage> {
             // Title
             Text(
               'Create Your Account',
-              style: TextStyle(
+              style: GoogleFonts.quicksand(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.green.shade700,
@@ -59,18 +58,18 @@ class _SignUpPageState extends State<SignUpPage> {
             const SizedBox(height: 30),
             // Input fields
             _buildTextField(
-              controller: _usernameController,
+              controller: _fullNameController,
               hintText: 'Full Name',
               icon: Icons.person,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 5),
             _buildTextField(
               controller: _emailController,
               hintText: 'Email',
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 5),
             _buildTextField(
               controller: _passwordController,
               hintText: 'Password',
@@ -78,21 +77,37 @@ class _SignUpPageState extends State<SignUpPage> {
               obscureText: true,
             ),
             const SizedBox(height: 40),
-            // Sign up button
+// Sign up button
             ElevatedButton(
-              onPressed: _signUp,
+              onPressed: _isLoading
+                  ? null // Disable button while loading
+                  : () {
+                      _signup(); // Call the signup method
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade700,
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 15.0, horizontal: 32.0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
+                  borderRadius: BorderRadius.circular(18.0),
                 ),
               ),
-              child: Text(
-                'Sign Up',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
+              child: _isLoading
+                  ? SizedBox(
+                      height: 15, // Size of the loading indicator
+                      width: 15,
+                      child: CircularProgressIndicator(
+                        color: Colors.white, // Spinner color
+                        strokeWidth: 2.0, // Thickness of the spinner
+                      ),
+                    )
+                  : Text(
+                      'Sign Up',
+                      style:
+                          GoogleFonts.roboto(fontSize: 18, color: Colors.white),
+                    ),
             ),
+
             const SizedBox(height: 20),
             // Alternative navigation
             Row(
@@ -103,15 +118,13 @@ class _SignUpPageState extends State<SignUpPage> {
                   style: TextStyle(fontSize: 16, color: Colors.green.shade900),
                 ),
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                LoginPage())); // Navigate to the login page
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          goToLogin(context); // Navigate to the login page
+                        },
                   child: Text(
-                    'Log in',
+                    'Sign In',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.green.shade700,
@@ -140,59 +153,43 @@ class _SignUpPageState extends State<SignUpPage> {
       obscureText: obscureText,
       keyboardType: keyboardType,
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.green.shade700),
+        prefixIcon: Icon(icon),
         hintText: hintText,
-        filled: true,
-        fillColor: Colors.green.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide.none,
-        ),
       ),
     );
   }
 
-  void _signUp() async {
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
-    final String username = _usernameController.text.trim();
-
-    if (email.isEmpty || password.isEmpty || username.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('All fields are required.')),
-      );
-      return;
-    }
+//method to sign up the user
+  _signup() async {
+    setState(() {
+      _isLoading = true; // Start loading
+    });
 
     try {
-      // Sign up the user with email and password
-      User? user = await _firebaseAuth.signUpWithEmailAndPassword(
-          email, password, username);
-      if (user != null) {
-        // Save user data to Firestore after sign-up
-        await _firestore.collection('users').doc(user.uid).set({
-          'username': username,
-          'email': email,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        // After successful sign-up, navigate to the HomePage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MyHomePage()),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sign up failed: $e')),
+      final user = await _auth.createUserWithEmailAndPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _fullNameController.text.trim(),
       );
+      if (user != null) {
+        log('User signed up successfully');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => Wrapper()));
+      }
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
-}
 
-void main() {
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: SignUpPage(),
-  ));
+//methods to navigate tologin page
+
+  goToLogin(BuildContext context) => {
+        log("Navigating to Login Page"),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        )
+      };
 }

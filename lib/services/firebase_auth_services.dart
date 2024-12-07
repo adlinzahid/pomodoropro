@@ -58,4 +58,24 @@ class FirebaseAuthServices {
   }
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  Future<UserCredential> signInWithCredential(AuthCredential credential) async {
+    return await _auth.signInWithCredential(credential);
+  }
+}
+
+Future<User> signInWithProvider(AuthProvider provider) async {
+  final UserCredential userCredential = await _auth.signInWithPopup(provider);
+
+  return userCredential.user!;
+}
+
+class _auth {
+  static signInWithCredential(AuthCredential credential) {}
+
+  static Future<UserCredential> signInWithPopup(AuthProvider provider) async {
+    // Implement the method logic here
+    // This is a placeholder implementation
+    return await FirebaseAuth.instance.signInWithPopup(provider);
+  }
 }

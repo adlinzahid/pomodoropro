@@ -68,8 +68,10 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
                   Colors.black,
                   onPressed: () {
                     // Retrieve inputs from the text fields
-                    final int currentCredits = int.tryParse(_creditsController.text) ?? 0;
-                    final double currentGpa = double.tryParse(_gpaController.text) ?? 0.0;
+                    final int currentCredits =
+                        int.tryParse(_creditsController.text) ?? 0;
+                    final double currentGpa =
+                        double.tryParse(_gpaController.text) ?? 0.0;
 
                     // Navigate to SecondTargetMarkCalculator with user inputs
                     Navigator.push(
@@ -125,8 +127,8 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
               hintText: hint,
               filled: true,
               fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12.0, vertical: 8.0),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
                 borderSide: BorderSide.none,
@@ -138,7 +140,8 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
     );
   }
 
-  Widget _buildButton(String label, Color color, {required VoidCallback onPressed}) {
+  Widget _buildButton(String label, Color color,
+      {required VoidCallback onPressed}) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+import '../authentication/login_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,8 +29,8 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to Login Page after 5 seconds
-    Timer(const Duration(seconds: 5), () {
+    // Navigate to Login Page after 3 seconds
+    Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()), //login page

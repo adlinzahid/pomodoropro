@@ -5,14 +5,27 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final tasksCollection = FirebaseFirestore.instance.collection('tasks');
+final todayTasksQuery =
+    tasksCollection.where('status', isEqualTo: 'incomplete').orderBy('duedate');
 
 final taskStreamProvider = StreamProvider.autoDispose((ref) {
-  return FirebaseFirestore.instance.collection('tasks').snapshots();
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    return const Stream.empty();
+  }
+  return FirebaseFirestore.instance
+      .collection('tasks')
+      .where('uid', isEqualTo: user.uid) // Only get tasks for the current user
+      .where('completed', isEqualTo: false) // Only get incomplete tasks
+      .orderBy('date', descending: true) // Order by date ascending
+      .snapshots();
 });
 
 class TodoListPage extends HookConsumerWidget {
-  const TodoListPage({Key? key}) : super(key: key);
-
+  const TodoListPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,6 +44,15 @@ class TodoListPage extends HookConsumerWidget {
         return;
       }
 
+      // get the current user's uid
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No user logged in')),
+        );
+        return;
+      }
+
       final taskData = {
         'name': nameController.text,
         'notes': notesController.text,
@@ -38,6 +60,7 @@ class TodoListPage extends HookConsumerWidget {
         'time': selectedTime.value?.format(context),
         'pomodoro': false,
         'completed': false,
+        'uid': user.uid,
       };
 
       try {
@@ -109,11 +132,8 @@ class TodoListPage extends HookConsumerWidget {
               ),
               onChanged: (value) {
                 searchQuery.value = value;
-              },   
-            ),  
-            
-
-
+              },
+            ),
           ),
           Expanded(
             child: tasksAsyncValue.when(
@@ -155,102 +175,119 @@ class TodoListPage extends HookConsumerWidget {
                           ],
                         ),
                         child: ListTile(
-  leading: Checkbox(
-    value: taskCompleted,
-    onChanged: (value) async {
-      await FirebaseFirestore.instance
-          .collection('tasks')
-          .doc(task['id'])
-          .update({'completed': value});
-    },
-  ),
-  title: Text(
-    task['name'],
-    style: TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      color: const Color.fromARGB(255, 0, 0, 0),
-      decoration: taskCompleted ? TextDecoration.lineThrough : null,
-    ),
-  ),
-  subtitle: Text(
-    '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
-    style: TextStyle(color: const Color.fromARGB(255, 2, 56, 14)),
-  ),
-  trailing: Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      
-      // Pomodoro Button
-      Container(
-  decoration: BoxDecoration(
-    color: Colors.green, // Green circular background
-    shape: BoxShape.circle, // Ensures the background is circular
-  ),
-  child: IconButton(
-    icon: Icon(
-      Icons.play_arrow, // "Play" icon
-      color: Colors.white, // Icon color is white
-    ),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PomodoroTimerPage(taskName: '', taskDateTime: '',),
-        ),
-      );
-    },
-  ),
-),
+                          leading: Checkbox(
+                            value: taskCompleted,
+                            onChanged: (value) async {
+                              await FirebaseFirestore.instance
+                                  .collection('tasks')
+                                  .doc(task['id'])
+                                  .update({'completed': value});
+                            },
+                          ),
+                          title: Text(
+                            task['name'],
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: const Color.fromARGB(255, 0, 0, 0),
+                              decoration: taskCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
+                            style: TextStyle(
+                                color: const Color.fromARGB(255, 2, 56, 14)),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Pomodoro Button
+                              Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      Colors.green, // Green circular background
+                                  shape: BoxShape
+                                      .circle, // Ensures the background is circular
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.play_arrow, // "Play" icon
+                                    color: Colors.white, // Icon color is white
+                                  ),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PomodoroTimerPage(
+                                          taskName: '',
+                                          taskDateTime: '',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
 
-      // Delete Button
-      IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () async {
-          // Show confirmation dialog before deletion
-          final bool? confirmed = await showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Confirm Delete'),
-                content: const Text('Are you sure you want to delete this task?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Delete task'),
-                  ),
-                ],
-              );
-            },
-          );
+                              // Delete Button
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  // Show confirmation dialog before deletion
+                                  final bool? confirmed = await showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Confirm Delete'),
+                                        content: const Text(
+                                            'Are you sure you want to delete this task?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context)
+                                                    .pop(false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(true),
+                                            child: const Text('Delete task'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
 
-          if (confirmed == true) {
-            // User confirmed deletion
-            try {
-              await FirebaseFirestore.instance
-                  .collection('tasks')
-                  .doc(task['id'])
-                  .delete();
+                                  if (confirmed == true) {
+                                    // User confirmed deletion
+                                    try {
+                                      await FirebaseFirestore.instance
+                                          .collection('tasks')
+                                          .doc(task['id'])
+                                          .delete();
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Task deleted successfully!')),
-              );
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error deleting task: $e')),
-              );
-            }
-          }
-        },
-      ),
-    ],
-  ),
-),
-
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Task deleted successfully!')),
+                                      );
+                                    } catch (e) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(
+                                                'Error deleting task: $e')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
