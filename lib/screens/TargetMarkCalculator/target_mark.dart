@@ -8,7 +8,7 @@ void main() {
 }
 
 class TargetMarkCalculator extends StatefulWidget {
-  const TargetMarkCalculator({Key? key}) : super(key: key);
+  const TargetMarkCalculator({super.key});
 
   @override
   State<TargetMarkCalculator> createState() => _TargetMarkCalculatorState();
@@ -17,6 +17,36 @@ class TargetMarkCalculator extends StatefulWidget {
 class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
   final TextEditingController _creditsController = TextEditingController();
   final TextEditingController _gpaController = TextEditingController();
+
+  bool _isCreditsValid = true;
+  bool _isGpaValid = true;
+
+  void _validateInputs() {
+    setState(() {
+      _isCreditsValid = int.tryParse(_creditsController.text) != null &&
+          _creditsController.text.isNotEmpty;
+      _isGpaValid = double.tryParse(_gpaController.text) != null &&
+          _gpaController.text.isNotEmpty &&
+          double.parse(_gpaController.text) >= 0 &&
+          double.parse(_gpaController.text) <= 4.0;
+    });
+
+    if (_isCreditsValid && _isGpaValid) {
+      // Navigate to SecondTargetMarkCalculator if inputs are valid
+      final int currentCredits = int.parse(_creditsController.text);
+      final double currentGpa = double.parse(_gpaController.text);
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SecondTargetMarkCalculator(
+            currentCredits: currentCredits,
+            currentGpa: currentGpa,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +63,7 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true, // Center the app bar title
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -44,12 +74,14 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
               'Enter current credits',
               'Enter credit hours',
               _creditsController,
+              _isCreditsValid,
             ),
             const SizedBox(height: 20),
             _buildInputBox(
               'Enter current GPA',
               'Enter GPA',
               _gpaController,
+              _isGpaValid,
             ),
             const Spacer(),
             Row(
@@ -61,29 +93,16 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
                   onPressed: () {
                     _creditsController.clear();
                     _gpaController.clear();
+                    setState(() {
+                      _isCreditsValid = true;
+                      _isGpaValid = true;
+                    });
                   },
                 ),
                 _buildButton(
                   'NEXT',
                   Colors.black,
-                  onPressed: () {
-                    // Retrieve inputs from the text fields
-                    final int currentCredits =
-                        int.tryParse(_creditsController.text) ?? 0;
-                    final double currentGpa =
-                        double.tryParse(_gpaController.text) ?? 0.0;
-
-                    // Navigate to SecondTargetMarkCalculator with user inputs
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SecondTargetMarkCalculator(
-                          currentCredits: currentCredits,
-                          currentGpa: currentGpa,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _validateInputs,
                 ),
               ],
             ),
@@ -94,7 +113,11 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
   }
 
   Widget _buildInputBox(
-      String title, String hint, TextEditingController controller) {
+    String title,
+    String hint,
+    TextEditingController controller,
+    bool isValid,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -109,11 +132,11 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Center-align text
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             title,
-            textAlign: TextAlign.center, // Center-align title
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -122,7 +145,7 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
           const SizedBox(height: 8.0),
           TextField(
             controller: controller,
-            textAlign: TextAlign.center, // Center-align input text
+            textAlign: TextAlign.center,
             decoration: InputDecoration(
               hintText: hint,
               filled: true,
@@ -131,9 +154,14 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
                   const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide.none,
+                borderSide: BorderSide(
+                  color: isValid ? Colors.transparent : Colors.red,
+                  width: 2.0,
+                ),
               ),
+              errorText: !isValid ? 'Invalid input' : null,
             ),
+            keyboardType: TextInputType.number,
           ),
         ],
       ),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'setting_targetmark.dart'; //import setting target mark dart file
+
+
 
 void main() {
   runApp(const MaterialApp(
     home: SecondTargetMarkCalculator(),
+    debugShowCheckedModeBanner: false,
   ));
 }
 
@@ -44,8 +48,11 @@ class _SecondTargetMarkCalculatorState
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black),
             onPressed: () {
-              // Settings action
-            },
+            Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => GradeSettingsPage()),
+  );
+},
           ),
         ],
         leading: IconButton(
@@ -106,9 +113,7 @@ class _SecondTargetMarkCalculatorState
                   icon: Icons.calculate,
                   label: 'CALCULATE',
                   color: Colors.black,
-                  onPressed: () {
-                    _calculateTargetGpa(); // Placeholder for GPA calculation logic
-                  },
+                  onPressed: _calculateTargetGpa,
                 ),
                 _buildIconButton(
                   icon: Icons.delete,
@@ -147,6 +152,7 @@ class _SecondTargetMarkCalculatorState
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
+          // Course Name
           Expanded(
             flex: 3,
             child: TextField(
@@ -160,11 +166,16 @@ class _SecondTargetMarkCalculatorState
                 ),
               ),
               onChanged: (value) {
-                _courses[index]['name'] = value;
+                if (RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+                  _courses[index]['name'] = value;
+                } else {
+                  _courses[index]['name'] = '';
+                }
               },
             ),
           ),
           const SizedBox(width: 8),
+          // Grade Dropdown
           Expanded(
             flex: 2,
             child: DropdownButtonFormField<String>(
@@ -178,7 +189,7 @@ class _SecondTargetMarkCalculatorState
                 ),
               ),
               hint: const Text('Grade'),
-              items: ['A', 'B', 'C', 'D', 'F']
+              items: ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
                   .map((grade) => DropdownMenuItem(
                         value: grade,
                         child: Text(grade),
@@ -190,6 +201,7 @@ class _SecondTargetMarkCalculatorState
             ),
           ),
           const SizedBox(width: 8),
+          // Credits
           Expanded(
             flex: 2,
             child: TextField(
@@ -204,7 +216,12 @@ class _SecondTargetMarkCalculatorState
               ),
               keyboardType: TextInputType.number,
               onChanged: (value) {
-                _courses[index]['credits'] = int.tryParse(value);
+                final credits = int.tryParse(value);
+                if (credits != null) {
+                  _courses[index]['credits'] = credits;
+                } else {
+                  _courses[index]['credits'] = null;
+                }
               },
             ),
           ),
@@ -276,7 +293,6 @@ class _SecondTargetMarkCalculatorState
 
   void _calculateTargetGpa() {
     // Placeholder: Implement GPA calculation logic
-    // Example: Loop through `_courses` to calculate GPA based on grades and credits
-
   }
 }
+
