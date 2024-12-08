@@ -30,8 +30,8 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to Login Page after 5 seconds
-    Timer(const Duration(seconds: 5), () {
+    // Navigate to Login Page after 3 seconds
+    Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

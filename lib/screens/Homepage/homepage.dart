@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:pomodoro_pro/screens/GroupCollab/groupscreen.dart';
 import 'package:pomodoro_pro/screens/Homepage/calendar_event.dart';
 import 'package:pomodoro_pro/screens/TargetMarkCalculator/target_mark.dart';
 import 'package:pomodoro_pro/screens/ToDopage/todo_page.dart';
@@ -23,14 +24,13 @@ class _MyHomePageState extends State<MyHomePage> {
   static final List<Widget> _pages = <Widget>[
     HomePage(), // Updated HomePage widget
     TodoListPage(), // Links to the TodoListPage in `todo_page.dart`
-    Center(
-        child:
-            Text('Group Collaboration Page', style: TextStyle(fontSize: 24))),
+    GroupCollaborationPage(), // Links to the GroupCollaborationPage in `groupscreen.dart`
     TargetMarkCalculator(), // Links to the TargetMarkPage in `target_mark.dart`
   ];
 
   void _onItemTapped(int index) {
     setState(() {
+      log('Selected page: $index');
       _selectedIndex = index;
     });
   }
@@ -79,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         Icon(Icons.military_tech_outlined, color: Colors.amber),
                     iconSize: 31.0,
                     onPressed: () {
-                      print('Reward Clicked');
+                      log('Navigate to Rewards Page');
                     },
                   ),
                 ),
@@ -89,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     icon: Icon(Icons.calendar_month, color: Colors.green[900]),
                     iconSize: 31.0,
                     onPressed: () {
+                      log('Navigate to Calendar Event Page');
                       Navigator.push(
                         context,
                         MaterialPageRoute(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'second_target_mark.dart'; // Import the second_target_mark.dart file
 
 void main() {
@@ -51,16 +52,12 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
+        title: Text(
           'Target Mark Calculator',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+          style: GoogleFonts.quicksand(
+            fontSize: 25, // Set the font size
+            fontWeight: FontWeight.bold, // Set the font weight
           ),
         ),
         centerTitle: true,
