@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class Auth {
@@ -15,6 +16,15 @@ class Auth {
       );
       await creds.user?.updateDisplayName(fullName);
       await creds.user?.reload();
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(creds.user?.uid)
+          .set({
+        'fullName': fullName,
+        'email': email,
+        'uid': creds.user?.uid,
+        'createdAt': FieldValue.serverTimestamp()
+      });
       return creds.user;
     } on FirebaseAuthException catch (e) {
       exceptionHandler(e.code); // Log the error
