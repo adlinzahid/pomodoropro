@@ -41,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: _selectedIndex == 0
           ? AppBar(
+              automaticallyImplyLeading: false,
               title: Padding(
                 padding: EdgeInsets.only(left: 10.0, top: 20.0),
                 child: Row(
@@ -211,8 +212,12 @@ class HomePage extends StatelessWidget {
                 icon: Icon(Icons.add_circle_outlined,
                     size: 35.0, color: Colors.lightGreen[300]),
                 onPressed: () {
-                  // Navigator.push(context,
-                  //     MaterialPageRoute(builder: (context) => TodoListPage()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TodoList(),
+                    ),
+                  );
                 },
               ),
             ],

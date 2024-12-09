@@ -363,7 +363,7 @@ class _TodoListState extends State<TodoList> {
     final taskName = tasksData.taskNameController.text.trim();
     final taskDescription = tasksData.taskDescriptionController.text.trim();
 
-    if (taskName.isEmpty || taskDescription.isEmpty) {
+    if (taskName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all the fields'),

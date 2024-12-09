@@ -94,4 +94,51 @@ class Tasksdata {
         .collection('tasks'); // get collection of tasks for the current user
     await taskCollection.doc(id).delete();
   }
+
+  // Fetch tasks in a date range
+  Future<List<Map<String, dynamic>>> fetchTasksInRange(
+      DateTime start, DateTime end) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: start)
+        .where('date', isLessThanOrEqualTo: end)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return {
+        'id': doc.id,
+        ...doc.data(),
+      };
+    }).toList();
+  }
+
+  // Fetch tasks for a specific date
+  Stream<List<Map<String, dynamic>>> fetchTasksForDate(DateTime date) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+    return FirebaseFirestore.instance
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
+        .snapshots()
+        .map((snapshot) {
+      final tasks = snapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          ...doc.data(),
+        };
+      }).toList();
+
+      // Debug: Print raw Firestore tasks
+      print('Fetched tasks from Firestore: $tasks');
+      return tasks;
+    });
+  }
 }

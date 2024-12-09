@@ -1,19 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:pomodoro_pro/services/tasksdata.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class CalendarEventPage extends StatefulWidget {
-  const CalendarEventPage({Key? key}) : super(key: key);
+  const CalendarEventPage({super.key});
 
   @override
-  _CalendarEventPageState createState() => _CalendarEventPageState();
+  State<CalendarEventPage> createState() => _CalendarEventPageState();
 }
 
 class _CalendarEventPageState extends State<CalendarEventPage> {
   late DateTime _focusedDay;
   late DateTime _selectedDay;
   late CalendarFormat _calendarFormat;
-  Map<DateTime, List<Map<String, dynamic>>> tasksMap = {};
+  final Tasksdata tasksdata = Tasksdata();
+  Map<DateTime, List<Map<String, dynamic>>> _groupedTasks = {};
 
   @override
   void initState() {
@@ -21,48 +23,29 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
     _focusedDay = DateTime.now();
     _selectedDay = DateTime.now();
     _calendarFormat = CalendarFormat.month;
-    _fetchAllTasks(); // Fetch tasks for all days on init
+    _loadAllTasks();
   }
 
-  // Fetch tasks for multiple days from Firebase
-  Future<void> _fetchAllTasks() async {
-    final startOfDay =
-        DateTime.now().subtract(const Duration(days: 30)); // Start date
-    final endOfDay = DateTime.now().add(const Duration(days: 30)); // End date
+  /// Groups tasks by their date
+  Future<void> _loadAllTasks() async {
+    final tasksStream = tasksdata.getTasksStream();
+    tasksStream.listen((tasks) {
+      final groupedTasks = <DateTime, List<Map<String, dynamic>>>{};
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('tasks')
-        .where('date', isGreaterThanOrEqualTo: startOfDay)
-        .where('date', isLessThanOrEqualTo: endOfDay)
-        .get();
+      for (var task in tasks) {
+        final taskDate = (task['date'] as Timestamp).toDate();
+        final dateOnly = DateTime(taskDate.year, taskDate.month, taskDate.day);
 
-    final tasks = snapshot.docs
-        .map((doc) => {
-              'id': doc.id,
-              ...doc.data() as Map<String, dynamic>,
-            })
-        .toList();
-
-    // Group tasks by date
-    tasksMap.clear();
-    for (var task in tasks) {
-      DateTime taskDate = (task['date'] as Timestamp).toDate();
-      DateTime taskDay = DateTime(taskDate.year, taskDate.month, taskDate.day);
-
-      if (!tasksMap.containsKey(taskDay)) {
-        tasksMap[taskDay] = [];
+        if (!groupedTasks.containsKey(dateOnly)) {
+          groupedTasks[dateOnly] = [];
+        }
+        groupedTasks[dateOnly]!.add(task);
       }
-      tasksMap[taskDay]!.add(task);
-    }
 
-    setState(() {}); // Trigger a rebuild after fetching tasks
-  }
-
-  // Check if a specific day has tasks
-  bool _hasTasksForDay(DateTime day) {
-    DateTime normalizedDay = DateTime(day.year, day.month, day.day);
-    return tasksMap.containsKey(normalizedDay) &&
-        tasksMap[normalizedDay]!.isNotEmpty;
+      setState(() {
+        _groupedTasks = groupedTasks;
+      });
+    });
   }
 
   @override
@@ -74,7 +57,6 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
       ),
       body: Column(
         children: [
-          // Calendar Widget
           TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
@@ -89,6 +71,7 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
                 shape: BoxShape.circle,
               ),
               selectedTextStyle: const TextStyle(color: Colors.white),
+              markersAlignment: Alignment.bottomCenter,
               cellMargin: const EdgeInsets.all(9),
             ),
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
@@ -110,84 +93,85 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
               });
             },
             calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, date, _) {
-                // Display a dot under the date if tasks exist
-                if (_hasTasksForDay(date)) {
+              markerBuilder: (context, day, events) {
+                final dateOnly = DateTime(day.year, day.month, day.day);
+                if (_groupedTasks.containsKey(dateOnly)) {
                   return Positioned(
                     bottom: 1,
                     child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: Colors.orange, // Dot color
+                      height: 5,
+                      width: 5,
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
                         shape: BoxShape.circle,
                       ),
                     ),
                   );
                 }
-                return const SizedBox();
+                return null; // No marker if no tasks
               },
             ),
           ),
-
-          // Display tasks for the selected day
           Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _fetchTasksByDate(
-                  _selectedDay), // Stream for selected day's tasks
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No tasks for this day'));
-                }
-
-                final tasks = snapshot.data!;
-
-                return ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = tasks[index];
-                    return ListTile(
-                      leading: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(task['time'] ?? 'No time specified'),
-                        ],
-                      ),
-                      title: Text(task['name'] ?? 'No task name'),
-                      subtitle: Text(
-                        task['notes'] ?? 'No notes available',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            child: _groupedTasks[DateTime(_selectedDay.year, _selectedDay.month,
+                            _selectedDay.day)]
+                        ?.isEmpty ??
+                    true
+                ? const Center(
+                    child: Text(
+                      "No tasks for this day",
+                      style: TextStyle(fontSize: 16.0, color: Colors.grey),
+                    ),
+                  )
+                : buildTaskList(_groupedTasks[DateTime(
+                    _selectedDay.year, _selectedDay.month, _selectedDay.day)]!),
           ),
         ],
       ),
     );
   }
 
-  // Function to fetch tasks for the selected day
-  Stream<List<Map<String, dynamic>>> _fetchTasksByDate(DateTime date) {
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+  /// Builds the task list for a selected day
+  Widget buildTaskList(List<Map<String, dynamic>> tasks) {
+    // Sort tasks by time
+    tasks.sort((a, b) {
+      final timeA = (a['time'] as Timestamp).toDate();
+      final timeB = (b['time'] as Timestamp).toDate();
+      return timeA.compareTo(timeB); // Sort in ascending order
+    });
 
-    return FirebaseFirestore.instance
-        .collection('tasks')
-        .where('date', isGreaterThanOrEqualTo: startOfDay)
-        .where('date', isLessThanOrEqualTo: endOfDay)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data() as Map<String, dynamic>,
-                })
-            .toList());
+    return ListView.builder(
+      itemCount: tasks.length,
+      itemBuilder: (context, index) {
+        final task = tasks[index];
+        final taskTime = (task['time'] as Timestamp).toDate();
+
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(color: Colors.green.shade300, width: 2.0),
+          ),
+          child: ListTile(
+            title: Text(
+              task['Name'],
+              style: const TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              "Notes: ${task['Notes']}",
+              style: const TextStyle(fontSize: 14.0, color: Colors.grey),
+            ),
+            trailing: Text(
+              TimeOfDay.fromDateTime(taskTime).format(context),
+              style: const TextStyle(fontSize: 14.0, color: Colors.black),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
