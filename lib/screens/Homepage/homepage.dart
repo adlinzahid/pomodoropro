@@ -7,7 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:pomodoro_pro/screens/GroupCollab/groupscreen.dart';
 import 'package:pomodoro_pro/screens/Homepage/calendar_event.dart';
 import 'package:pomodoro_pro/screens/TargetMarkCalculator/target_mark.dart';
-import 'package:pomodoro_pro/screens/ToDopage/todo_page.dart';
+// import 'package:pomodoro_pro/screens/ToDopage/todo_page.dart';
+import 'package:pomodoro_pro/screens/ToDopage/todoscreen.dart';
 import 'package:pomodoro_pro/screens/authentication/userProfile.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // List of pages to display based on the selected index
   static final List<Widget> _pages = <Widget>[
     HomePage(), // Updated HomePage widget
-    TodoListPage(), // Links to the TodoListPage in `todo_page.dart`
+    TodoList(), // Links to the TodoListPage in `todo_page.dart`
     GroupCollaborationPage(), // Links to the GroupCollaborationPage in `groupscreen.dart`
     TargetMarkCalculator(), // Links to the TargetMarkPage in `target_mark.dart`
   ];
@@ -210,8 +211,8 @@ class HomePage extends StatelessWidget {
                 icon: Icon(Icons.add_circle_outlined,
                     size: 35.0, color: Colors.lightGreen[300]),
                 onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => TodoListPage()));
+                  // Navigator.push(context,
+                  //     MaterialPageRoute(builder: (context) => TodoListPage()));
                 },
               ),
             ],

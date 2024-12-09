@@ -24,60 +24,84 @@ class _GroupCollaborationPageState extends State<GroupCollaborationPage> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment:
-                MainAxisAlignment.start, // Aligns everything at the top
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  log('Create Group button pressed');
-                  // Handle Create Group button press
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                ),
-                icon: Icon(Icons.add, color: Colors.white),
-                label: Text(
-                  "Create Group",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+      body: Column(
+        children: [
+          // Your main content or task list
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "Your groups will appear here.",
+                      style: GoogleFonts.quicksand(fontSize: 16),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () {
-                  log('Join Group button pressed');
-                  // Handle Join Group button press
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                ),
-                icon: Icon(Icons.link, color: Colors.white),
-                label: Text(
-                  "Join Group",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
-                ),
-              ),
-              SizedBox(height: 100),
-              Text(
-                "No Groups Created",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // "Create Task" Button at the Bottom
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      log('Create Group button pressed');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 215, 253, 179), // Green background
+                      foregroundColor: Colors.black, // Black text
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.black),
+                    label: Text(
+                      "Create Group Collaboration",
+                      style: GoogleFonts.quicksand(
+                          fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                // Add some space between the buttons
+                const SizedBox(height: 10.0),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      log('Join Group button pressed');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(
+                          255, 215, 253, 179), // Green background
+                      foregroundColor: Colors.black, // Black text
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.black),
+                    label: Text(
+                      "Join Group Collaboration",
+                      style: GoogleFonts.quicksand(
+                          fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
