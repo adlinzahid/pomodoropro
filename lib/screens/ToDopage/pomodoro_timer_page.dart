@@ -1,24 +1,24 @@
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 class PomodoroTimerPage extends StatefulWidget {
   final String taskName;
   final String taskDateTime;
 
   const PomodoroTimerPage({
-    Key? key,
+    super.key,
     required this.taskName,
     required this.taskDateTime,
-  }) : super(key: key);
+  });
 
   @override
   State<PomodoroTimerPage> createState() => _PomodoroTimerPageState();
 }
 
 class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
-  int selectedMinutes = 25;
+  int selectedMinutes = 0;
   int selectedSeconds = 0;
   late int remainingTime;
   Timer? timer;
@@ -74,31 +74,31 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
     });
   }
 
-void _showCompletionDialog() async {
-  final AudioPlayer audioPlayer = AudioPlayer();
-  try {
-    // Play the completion sound
-    await audioPlayer.play(AssetSource('sounds/timer_done.mp3'));
-  } catch (e) {
-    debugPrint('Error playing sound: $e');
+  void _showCompletionDialog() async {
+    final AudioPlayer audioPlayer = AudioPlayer();
+    try {
+      // Play the completion sound
+      await audioPlayer.play(AssetSource('sounds/timer_done.mp3'));
+    } catch (e) {
+      debugPrint('Error playing sound: $e');
+    }
+
+    // Show the completion dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pomodoro Completed!'),
+        content:
+            const Text('Great job! Take a short break or start a new task.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
-
-  // Show the completion dialog
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Pomodoro Completed!'),
-      content: const Text('Great job! Take a short break or start a new task.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
-
 
   void _showTimePicker() {
     showModalBottomSheet(
@@ -109,9 +109,10 @@ void _showCompletionDialog() async {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              const Text(
+              Text(
                 'Set Timer',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: GoogleFonts.quicksand(
+                    fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -144,7 +145,8 @@ void _showCompletionDialog() async {
                     ),
                     const Text(
                       ' : ',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     // Seconds Picker
                     Expanded(
@@ -210,7 +212,8 @@ void _showCompletionDialog() async {
             child: Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 211, 245, 212), //shade color of task details
+                color: const Color.fromARGB(
+                    255, 211, 245, 212), //shade color of task details
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(color: Colors.green.shade800, width: 2.0),
                 boxShadow: [
@@ -226,7 +229,7 @@ void _showCompletionDialog() async {
                 children: [
                   Text(
                     'Task: ${widget.taskName}',
-                    style: const TextStyle(
+                    style: GoogleFonts.quicksand(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -234,7 +237,7 @@ void _showCompletionDialog() async {
                   const SizedBox(height: 8),
                   Text(
                     'Scheduled: ${widget.taskDateTime}',
-                    style: const TextStyle(
+                    style: GoogleFonts.quicksand(
                       fontSize: 16,
                       color: Colors.black54,
                     ),
@@ -247,22 +250,47 @@ void _showCompletionDialog() async {
           Expanded(
             child: Center(
               child: GestureDetector(
-                onTap: _showTimePicker,
-                child: CircleAvatar(
-                  radius: 120.0,
-                  backgroundColor: const Color.fromARGB(255, 18, 77, 19),
-                  child: Text(
-                    formatTime(remainingTime),
-                    style: const TextStyle(
-                      fontSize: 48.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                onTap: _showTimePicker, // Function to open the time picker
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Circle background
+                    CircleAvatar(
+                      radius: 120.0,
+                      backgroundColor: const Color.fromARGB(255, 18, 77, 19),
                     ),
-                  ),
+                    // Text displayed in the center
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (remainingTime ==
+                            Duration
+                                .zero) // Display "Set Timer" if no time is set
+                          const Text(
+                            'Set Timer',
+                            style: TextStyle(
+                              fontSize: 24.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          )
+                        else // Display the countdown timer if time is set
+                          Text(
+                            formatTime(remainingTime),
+                            style: const TextStyle(
+                              fontSize: 48.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+
           // Timer controls
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -281,7 +309,7 @@ void _showCompletionDialog() async {
                   ),
                   child: Text(
                     isRunning ? 'Pause' : 'Start',
-                    style: const TextStyle(
+                    style: GoogleFonts.quicksand(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -298,9 +326,9 @@ void _showCompletionDialog() async {
                     ),
                     backgroundColor: Colors.red,
                   ),
-                  child: const Text(
+                  child: Text(
                     'Reset',
-                    style: TextStyle(
+                    style: GoogleFonts.quicksand(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
