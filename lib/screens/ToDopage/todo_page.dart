@@ -206,10 +206,10 @@
 //                               // Pomodoro Button
 //                               Container(
 //                                 decoration: BoxDecoration(
-//                                   color:
-//                                       Colors.green, // Green circular background
-//                                   shape: BoxShape
-//                                       .circle, // Ensures the background is circular
+                                  // color:
+                                  //     Colors.green, // Green circular background
+                                  // shape: BoxShape
+                                  //     .circle, // Ensures the background is circular
 //                                 ),
 //                                 child: IconButton(
 //                                   icon: Icon(
