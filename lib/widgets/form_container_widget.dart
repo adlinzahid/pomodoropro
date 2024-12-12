@@ -12,7 +12,7 @@ class FormContainerWidget extends StatefulWidget {
   final TextInputType? inputType;
 
   const FormContainerWidget({
-    Key? key,
+    super.key,
     required this.controller,
     this.fieldkey,
     this.isPassword = false,
@@ -22,11 +22,11 @@ class FormContainerWidget extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.inputType,
-  }) : super(key: key);
+  });
 
   @override
+  // ignore: no_logic_in_create_state
   State<StatefulWidget> createState() {
-    // TODO: implement createState
     throw UnimplementedError();
   }
 }
