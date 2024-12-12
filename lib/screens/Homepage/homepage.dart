@@ -9,7 +9,7 @@ import 'package:pomodoro_pro/screens/Homepage/calendar_event.dart';
 import 'package:pomodoro_pro/screens/TargetMarkCalculator/target_mark.dart';
 // import 'package:pomodoro_pro/screens/ToDopage/todo_page.dart';
 import 'package:pomodoro_pro/screens/ToDopage/todoscreen.dart';
-import 'package:pomodoro_pro/screens/authentication/userProfile.dart';
+import 'package:pomodoro_pro/screens/authentication/user_profile.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -160,7 +160,7 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.all(10.0),
           child: GestureDetector(
             onTap: () {
-              print('Box Clicked');
+              log('Box Clicked');
             },
             child: Container(
               width: double.infinity,
