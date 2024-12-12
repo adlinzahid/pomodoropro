@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:pomodoro_pro/models/user_model.dart';
@@ -23,7 +25,7 @@ class OurDatabase {
 
       retVal = "success";
     } catch (e) {
-      print(e);
+      log(e.toString());
     }
 
     return retVal;
@@ -34,14 +36,14 @@ class OurDatabase {
         uid: '', email: '', fullName: '', accountCreated: Timestamp.now());
 
     try {
-      DocumentSnapshot _docSnapshot =
+      DocumentSnapshot docSnapshot =
           await _firestore.collection("users").doc(uid).get();
       retVal.uid = uid;
-      retVal.fullName = _docSnapshot.get('fullName');
-      retVal.email = _docSnapshot.get('email');
-      retVal.accountCreated = _docSnapshot.get('accountCreated');
+      retVal.fullName = docSnapshot.get('fullName');
+      retVal.email = docSnapshot.get('email');
+      retVal.accountCreated = docSnapshot.get('accountCreated');
     } catch (e) {
-      print(e);
+      log(e.toString());
     }
     return retVal;
   }
