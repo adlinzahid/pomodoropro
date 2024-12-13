@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:pomodoro_pro/services/tasksdata.dart';
 import 'task_list_page.dart';
 
@@ -31,9 +32,8 @@ class _TodoListState extends State<TodoList> {
       body: Column(
         children: [
           Expanded(
-            child: Tasklistpage(),
+            child: Tasklistpage(), // Display the list of tasks
           ),
-          // Your main content or task list
 
           // "Create Task" Button at the Bottom
           Padding(
@@ -225,7 +225,7 @@ class _TodoListState extends State<TodoList> {
                     valueListenable: tasksData.selectedDate,
                     builder: (context, date, child) {
                       return Text(
-                        'Date: ${date.toLocal().toString().split(' ')[0]}',
+                        'Date: ${DateFormat.yMMMd().format(date)}',
                         style:
                             const TextStyle(fontSize: 16, color: Colors.white),
                       );

@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -80,15 +83,15 @@ class _TasklistpageState extends State<Tasklistpage> {
 
                       // Safely format the date and time
                       final formattedDate = task['date'] != null
-                          ? DateFormat.yMd().format(task['date']
-                              .toDate()
-                              .toLocal()) // Convert to local time
-                          : 'No date specified';
+                          ? DateFormat.yMMMd().format(
+                              task['date'].toDate(),
+                            )
+                          : 'No Date';
+                      // Assuming you have a Timestamp object named 'taskDate'
 
                       final formattedTime = task['time'] != null
-                          ? DateFormat.jm().format(task['time']
-                              .toDate()
-                              .toLocal()) // Convert to local time
+                          ? DateFormat.jm().format((task['time'] as Timestamp)
+                              .toDate()) // Convert to DateTime
                           : 'No time specified';
 
                       return Padding(
@@ -158,11 +161,19 @@ class _TasklistpageState extends State<Tasklistpage> {
                                             color: Colors.red,
                                             size: 18.0,
                                           ),
-                                          onPressed: () {
-                                            _showConfirmationDeleteTask(
+                                          onPressed: () async {
+                                            log('Attempting to delete task ${task['id']}');
+                                            bool shouldDelete =
+                                                await _showConfirmationDeleteTask(
                                               context,
                                               task['id'],
                                             );
+                                            if (shouldDelete) {
+                                              tasksdata.deleteTask(task['id']);
+                                              log('Task ${task['id']} deleted');
+                                            } else {
+                                              log('Task ${task['id']} not deleted');
+                                            }
                                           },
                                         ),
                                       ],
