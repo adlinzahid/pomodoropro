@@ -17,32 +17,32 @@ class TargetMarkCalculator extends StatefulWidget {
 
 class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
   final TextEditingController _creditsController = TextEditingController();
-  final TextEditingController _gpaController = TextEditingController();
+  final TextEditingController _cumulativeGpaController = TextEditingController();
 
   bool _isCreditsValid = true;
-  bool _isGpaValid = true;
+  bool _isCumulativeGpaValid = true;
 
   void _validateInputs() {
     setState(() {
       _isCreditsValid = int.tryParse(_creditsController.text) != null &&
           _creditsController.text.isNotEmpty;
-      _isGpaValid = double.tryParse(_gpaController.text) != null &&
-          _gpaController.text.isNotEmpty &&
-          double.parse(_gpaController.text) >= 0 &&
-          double.parse(_gpaController.text) <= 4.0;
+      _isCumulativeGpaValid = double.tryParse(_cumulativeGpaController.text) != null &&
+          _cumulativeGpaController.text.isNotEmpty &&
+          double.parse(_cumulativeGpaController.text) >= 0 &&
+          double.parse(_cumulativeGpaController.text) <= 4.0;
     });
 
-    if (_isCreditsValid && _isGpaValid) {
+    if (_isCreditsValid && _isCumulativeGpaValid) {
       // Navigate to SecondTargetMarkCalculator if inputs are valid
       final int currentCredits = int.parse(_creditsController.text);
-      final double currentGpa = double.parse(_gpaController.text);
+      final double currentCumulativeGpa = double.parse(_cumulativeGpaController.text);
 
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => SecondTargetMarkCalculator(
             currentCredits: currentCredits,
-            currentGpa: currentGpa,
+            currentGpa: currentCumulativeGpa,
           ),
         ),
       );
@@ -75,10 +75,10 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
             ),
             const SizedBox(height: 20),
             _buildInputBox(
-              'Enter current GPA',
-              'Enter GPA',
-              _gpaController,
-              _isGpaValid,
+              'Enter current Cumulative GPA',
+              'Enter current Cumulative GPA',
+              _cumulativeGpaController,
+              _isCumulativeGpaValid,
             ),
             const Spacer(),
             Row(
@@ -89,10 +89,10 @@ class _TargetMarkCalculatorState extends State<TargetMarkCalculator> {
                   Colors.black,
                   onPressed: () {
                     _creditsController.clear();
-                    _gpaController.clear();
+                    _cumulativeGpaController.clear();
                     setState(() {
                       _isCreditsValid = true;
-                      _isGpaValid = true;
+                      _isCumulativeGpaValid = true;
                     });
                   },
                 ),

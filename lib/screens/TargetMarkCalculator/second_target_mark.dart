@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'setting_targetmark.dart'; //import setting target mark dart file
-
-
+import 'setting_targetmark.dart'; // Import target mark settings page
+import 'gpa_calculator.dart'; // Import GPA calculator page
 
 void main() {
   runApp(const MaterialApp(
@@ -48,11 +47,11 @@ class _SecondTargetMarkCalculatorState
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.black),
             onPressed: () {
-            Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => GradeSettingsPage()),
-  );
-},
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => GradeSettingsPage()),
+              );
+            },
           ),
         ],
         leading: IconButton(
@@ -83,8 +82,10 @@ class _SecondTargetMarkCalculatorState
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildCurrentStat('CREDITS', widget.currentCredits.toString()),
-                  _buildCurrentStat('GPA', widget.currentGpa.toStringAsFixed(2)),
+                  _buildCurrentStat(
+                      'CREDITS', widget.currentCredits.toString()),
+                  _buildCurrentStat(
+                      'CGPA', widget.currentGpa.toStringAsFixed(2)),
                 ],
               ),
             ),
@@ -166,11 +167,7 @@ class _SecondTargetMarkCalculatorState
                 ),
               ),
               onChanged: (value) {
-                if (RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-                  _courses[index]['name'] = value;
-                } else {
-                  _courses[index]['name'] = '';
-                }
+                _courses[index]['name'] = value;
               },
             ),
           ),
@@ -189,7 +186,21 @@ class _SecondTargetMarkCalculatorState
                 ),
               ),
               hint: const Text('Grade'),
-              items: ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F']
+              items: [
+                'A+',
+                'A',
+                'A-',
+                'B+',
+                'B',
+                'B-',
+                'C+',
+                'C',
+                'C-',
+                'D+',
+                'D',
+                'D-',
+                'F'
+              ]
                   .map((grade) => DropdownMenuItem(
                         value: grade,
                         child: Text(grade),
@@ -216,12 +227,7 @@ class _SecondTargetMarkCalculatorState
               ),
               keyboardType: TextInputType.number,
               onChanged: (value) {
-                final credits = int.tryParse(value);
-                if (credits != null) {
-                  _courses[index]['credits'] = credits;
-                } else {
-                  _courses[index]['credits'] = null;
-                }
+                _courses[index]['credits'] = int.tryParse(value);
               },
             ),
           ),
@@ -267,7 +273,8 @@ class _SecondTargetMarkCalculatorState
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Confirmation'),
-          content: const Text('Are you sure you want to delete the last course?'),
+          content:
+              const Text('Are you sure you want to delete the last course?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -292,7 +299,92 @@ class _SecondTargetMarkCalculatorState
   }
 
   void _calculateTargetGpa() {
-    // Placeholder: Implement GPA calculation logic
+    double targetGpa = GPACalculator.calculateGpa(
+      currentCredits: widget.currentCredits,
+      currentGpa: widget.currentGpa,
+      courses: _courses,
+    );
+
+    double cumulativeGpa = GPACalculator.calculateCumulativeGpa(
+      currentCredits: widget.currentCredits,
+      currentGpa: widget.currentGpa,
+      targetGpa: targetGpa,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TargetGpaResultPage(
+          courses: _courses,
+          targetGpa: targetGpa,
+          currentGpa: widget.currentGpa,
+          cumulativeGpa: cumulativeGpa,
+        ),
+      ),
+    );
   }
 }
 
+class GPACalculator {
+  static double getGradePoint(String grade) {
+    switch (grade) {
+      case 'A+':
+      case 'A':
+        return 4.0;
+      case 'A-':
+        return 3.7;
+      case 'B+':
+        return 3.3;
+      case 'B':
+        return 3.0;
+      case 'B-':
+        return 2.7;
+      case 'C+':
+        return 2.3;
+      case 'C':
+        return 2.0;
+      case 'C-':
+        return 1.7;
+      case 'D+':
+        return 1.3;
+      case 'D':
+        return 1.0;
+      case 'F':
+        return 0.0;
+      default:
+        return 0.0;
+    }
+  }
+
+  static double calculateGpa({
+    required int currentCredits,
+    required double currentGpa,
+    required List<Map<String, dynamic>> courses,
+  }) {
+    double currentGradePoints = currentCredits * currentGpa;
+    double totalGradePoints = currentGradePoints;
+    int totalCredits = currentCredits;
+
+    for (var course in courses) {
+      if (course['grade'] != null && course['credits'] != null) {
+        double gradePoint = getGradePoint(course['grade']);
+        int credits = course['credits'];
+        totalGradePoints += gradePoint * credits;
+        totalCredits += credits;
+      }
+    }
+    return totalGradePoints / totalCredits;
+  }
+
+  static double calculateCumulativeGpa({
+    required int currentCredits,
+    required double currentGpa,
+    required double targetGpa,
+  }) {
+    double currentGradePoints = currentCredits * currentGpa;
+    double targetGradePoints = targetGpa * currentCredits;
+
+    return (currentGradePoints + targetGradePoints) /
+        (currentCredits * 2); // Modify weight logic as needed
+  }
+}
