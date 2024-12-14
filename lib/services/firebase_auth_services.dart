@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -15,8 +17,8 @@ class FirebaseAuthServices {
       );
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('Failed with error code: ${e.code}');
-      print(e.message);
+      log('Failed with error code: ${e.code}');
+      log(e.message ?? 'No error message available');
       return null;
     }
   }
@@ -37,8 +39,8 @@ class FirebaseAuthServices {
       });
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print('Failed with error code: ${e.code}');
-      print(e.message);
+      log('Failed with error code: ${e.code}');
+      log('e.message');
       return null;
     }
   }
@@ -70,6 +72,7 @@ Future<User> signInWithProvider(AuthProvider provider) async {
   return userCredential.user!;
 }
 
+// ignore: camel_case_types
 class _auth {
   static signInWithCredential(AuthCredential credential) {}
 

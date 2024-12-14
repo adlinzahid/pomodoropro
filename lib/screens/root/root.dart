@@ -34,10 +34,10 @@ class _OurRootState extends State<OurRoot> {
     super.didChangeDependencies();
 
     //get the state, check current User, set AuthStatus based on state
-    UserModel _userStream = Provider.of<UserModel>(context);
+    UserModel userStream = Provider.of<UserModel>(context);
     setState(() {
       _authStatus = AuthStatus.loggedIn;
-      currentUid = _userStream.uid;
+      currentUid = userStream.uid;
     });
   }
 

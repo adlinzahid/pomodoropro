@@ -14,10 +14,10 @@ class SecondTargetMarkCalculator extends StatefulWidget {
   final double currentGpa;
 
   const SecondTargetMarkCalculator({
-    Key? key,
+    super.key,
     this.currentCredits = 20, // Example data from the previous page
     this.currentGpa = 3.81, // Example data from the previous page
-  }) : super(key: key);
+  });
 
   @override
   State<SecondTargetMarkCalculator> createState() =>
