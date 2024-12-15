@@ -26,7 +26,12 @@ class SecondTargetMarkCalculator extends StatefulWidget {
 
 class _SecondTargetMarkCalculatorState
     extends State<SecondTargetMarkCalculator> {
-  final List<Map<String, dynamic>> _courses = []; // List to hold course info
+  // Initialize with three course input boxes
+  final List<Map<String, dynamic>> _courses = [
+    {'name': '', 'grade': null, 'credits': null},
+    {'name': '', 'grade': null, 'credits': null},
+    {'name': '', 'grade': null, 'credits': null},
+  ]; // List to hold course info
 
   @override
   Widget build(BuildContext context) {
@@ -299,30 +304,41 @@ class _SecondTargetMarkCalculatorState
   }
 
   void _calculateTargetGpa() {
-    double targetGpa = GPACalculator.calculateGpa(
-      currentCredits: widget.currentCredits,
-      currentGpa: widget.currentGpa,
-      courses: _courses,
-    );
-
-    double cumulativeGpa = GPACalculator.calculateCumulativeGpa(
-      currentCredits: widget.currentCredits,
-      currentGpa: widget.currentGpa,
-      targetGpa: targetGpa,
-    );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => TargetGpaResultPage(
-          courses: _courses,
-          targetGpa: targetGpa,
-          currentGpa: widget.currentGpa,
-          cumulativeGpa: cumulativeGpa,
-        ),
+  if (_courses.isEmpty) {
+    // Show a SnackBar to alert the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please add at least one course before calculating!'),
+        backgroundColor: Colors.red,
       ),
     );
+    return; // Stop further execution
   }
+
+  // Calculate the target GPA
+  double targetGpa = GPACalculator.calculateGpa(
+    courses: _courses,
+  );
+
+  // Calculate the cumulative GPA
+  double cumulativeGpa = GPACalculator.calculateCumulativeGpa(
+    currentGpa: widget.currentGpa,
+    targetGpa: targetGpa,
+  );
+
+  // Navigate to the result page
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => TargetGpaResultPage(
+        courses: _courses,
+        targetGpa: targetGpa,
+        currentGpa: widget.currentGpa,
+        cumulativeGpa: cumulativeGpa,
+      ),
+    ),
+  );
+}
 }
 
 class GPACalculator {
@@ -357,13 +373,10 @@ class GPACalculator {
   }
 
   static double calculateGpa({
-    required int currentCredits,
-    required double currentGpa,
     required List<Map<String, dynamic>> courses,
   }) {
-    double currentGradePoints = currentCredits * currentGpa;
-    double totalGradePoints = currentGradePoints;
-    int totalCredits = currentCredits;
+    double totalGradePoints = 0;
+    int totalCredits = 0;
 
     for (var course in courses) {
       if (course['grade'] != null && course['credits'] != null) {
@@ -373,18 +386,15 @@ class GPACalculator {
         totalCredits += credits;
       }
     }
-    return totalGradePoints / totalCredits;
+
+    return totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
   }
 
   static double calculateCumulativeGpa({
-    required int currentCredits,
     required double currentGpa,
     required double targetGpa,
   }) {
-    double currentGradePoints = currentCredits * currentGpa;
-    double targetGradePoints = targetGpa * currentCredits;
-
-    return (currentGradePoints + targetGradePoints) /
-        (currentCredits * 2); // Modify weight logic as needed
+    // Assume equal credits for current GPA and target GPA
+    return (currentGpa + targetGpa) / 2;
   }
 }

@@ -127,7 +127,7 @@ class TargetGpaResultPage extends StatelessWidget {
                 backgroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25.0), // Rounded button
+                  borderRadius: BorderRadius.circular(10.0), // new changes on this back button radius
                 ),
               ),
               child: const Text(
