@@ -17,6 +17,30 @@ class Tasksdata {
       ValueNotifier<TimeOfDay>(TimeOfDay.now());
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // dispose method to dispose of the controllers and value notifiers so that they don't take up memory
+  void dispose() {
+    taskNameController.dispose();
+    taskDescriptionController.dispose();
+    selectedDate.dispose();
+    selectedTime.dispose();
+  }
+
+// constructor to initialize the controllers and value notifiers
+  Tasksdata() {
+    taskNameController.addListener(() {
+      log('Task name: ${taskNameController.text}');
+    });
+    taskDescriptionController.addListener(() {
+      log('Task description: ${taskDescriptionController.text}');
+    });
+    selectedDate.addListener(() {
+      log('Selected date: ${selectedDate.value}');
+    });
+    selectedTime.addListener(() {
+      log('Selected time: ${selectedTime.value}');
+    });
+  }
+
   //method to get the stream of tasks
   Stream<List<Map<String, dynamic>>> getTasksStream() {
     final user = FirebaseAuth.instance.currentUser;
@@ -210,5 +234,35 @@ class Tasksdata {
         };
       }).toList();
     }
+  }
+
+  // Method to fetch tasks for today
+  Stream<List<Map<String, dynamic>>> getTodayTasks() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    DateTime now = DateTime.now();
+    DateTime startOfDay = DateTime(now.year, now.month, now.day); // 12:00 AM
+    DateTime endOfDay = startOfDay
+        .add(const Duration(days: 1))
+        .subtract(const Duration(seconds: 1)); // 11:59:59 PM
+
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: startOfDay) // Start of the day
+        .where('date', isLessThanOrEqualTo: endOfDay) // End of the day
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
   }
 }
