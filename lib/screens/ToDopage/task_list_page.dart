@@ -169,24 +169,6 @@ class _TasklistpageState extends State<Tasklistpage> {
                                                     .markTaskCompleted(
                                                         task['id']);
 
-                                                // Remove task from UI and refresh after marking task as completed
-                                                if (mounted) {
-                                                  // Check if mounted before calling setState
-                                                  setState(() {
-                                                    allTasks = allTasks
-                                                        .where((t) =>
-                                                            t['id'] !=
-                                                            task['id'])
-                                                        .toList();
-                                                    filteredTasks =
-                                                        filteredTasks
-                                                            .where((t) =>
-                                                                t['id'] !=
-                                                                task['id'])
-                                                            .toList();
-                                                  });
-                                                }
-
                                                 // Update points and streak after marking task as completed
                                                 await tasksdata
                                                     .updateUserPointsAndStreak();
@@ -203,6 +185,13 @@ class _TasklistpageState extends State<Tasklistpage> {
                                               } catch (e) {
                                                 log('Error completing task: $e');
                                               }
+                                              if (mounted) {
+                                                setState(() {
+                                                  filteredTasks.remove(task);
+                                                });
+                                              }
+                                            } else {
+                                              log('Task ${task['id']} not completed');
                                             }
                                           },
                                         ),
