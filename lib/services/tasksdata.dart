@@ -265,4 +265,116 @@ class Tasksdata {
       }).toList();
     });
   }
+
+  // method to mark a task as completed, and move the completed task to the completedTask collection
+  Future<void> markTaskCompleted(String taskId) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    try {
+      // fetch task data before marking it as completed
+      final taskDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('tasks')
+          .doc(taskId)
+          .get();
+
+      if (taskDoc.exists) {
+        final taskData = taskDoc.data();
+
+        // add the completed task to the completedTasks collection
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('completedTask')
+            .doc(taskId)
+            .set(
+                taskData!); // set the task data in the completedTask collection
+
+        //remove the task from the tasks collection
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('tasks')
+            .doc(taskId)
+            .delete();
+        log('Task marked as completed, moved to completedTasks and deleted from tasks.');
+
+        //update user's points and streak
+        await updateUserPointsAndStreak();
+      } else {
+        log('Task with ID $taskId does not exist.');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error marking task as completed: $e');
+      }
+    }
+  }
+
+// method to update user's points and streak
+  Future<void> updateUserPointsAndStreak() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    try {
+      // fetch user's completed tasks
+      final completedTasks = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('completedTask')
+          .where('completed', isEqualTo: true)
+          .get();
+
+      int completedTasksCount = completedTasks.docs.length;
+      log('Completed tasks count: $completedTasksCount');
+
+      //calculate points and streak
+
+      int points =
+          completedTasksCount; // points is equal to completed tasks counts
+      int streak = points; // streak is equal to points
+
+      // update user's points and streak
+      await _firestore.collection('users').doc(user.uid).update({
+        'points': points,
+        'streak': streak,
+      });
+
+      log('User points and streak updated successfully: Points: $points, Streak: $streak');
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error updating user points and streak: $e');
+      }
+    }
+  }
+
+  //method to fetch completed tasks
+  Stream<List<Map<String, dynamic>>> getCompletedTasks() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('CompletedTasks')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
 }
