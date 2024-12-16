@@ -1,15 +1,12 @@
 import 'dart:developer';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:pomodoro_pro/screens/GroupCollab/groupscreen.dart';
 import 'package:pomodoro_pro/screens/Homepage/calendar_event.dart';
 import 'package:pomodoro_pro/screens/TargetMarkCalculator/target_mark.dart';
-// import 'package:pomodoro_pro/screens/ToDopage/todo_page.dart';
 import 'package:pomodoro_pro/screens/ToDopage/todoscreen.dart';
 import 'package:pomodoro_pro/screens/authentication/user_profile.dart';
+import 'package:pomodoro_pro/services/tasksdata.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -19,6 +16,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final Tasksdata tasksdata = Tasksdata();
   int _selectedIndex = 0;
 
   // List of pages to display based on the selected index
@@ -36,6 +34,12 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  // Dispose of the controller when the widget is removed from the tree
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,27 +50,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: EdgeInsets.only(left: 10.0, top: 20.0),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
+                    IconButton(
+                      icon: Icon(Icons.account_circle),
+                      iconSize: 40.0,
+                      color: const Color.fromARGB(255, 150, 164, 151),
+                      onPressed: () {
                         log('Navigate to User Profile');
                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => UserProfile(),
-                          ),
-                        );
-                      },
-                      child: Icon(
-                        Icons.account_circle,
-                        size: 40.0,
-                        color: const Color.fromARGB(
-                            255, 150, 164, 151), // Adjust color as needed
-                      ),
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => UserProfile()));
+                      }, // Adjust color as needed
                     ),
                     SizedBox(
                         width: 10.0), // Space between the icon and the text
+                    // display current logged in user user name here
                     Text(
-                      "Welcome", // Use the user's name here
+                      "Welcome",
                       style: GoogleFonts.quicksand(
                           fontSize: 25.0, fontWeight: FontWeight.bold),
                     ),
@@ -135,21 +135,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
 // Define the new HomePage widget with task fetching and display functionality
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  HomePage({super.key});
 
-  // Fetch tasks from Firebase Firestore
-  Stream<QuerySnapshot> getTodayTasks() {
-    final today = DateTime.now();
-    final todayStart = DateTime(today.year, today.month, today.day);
-    final tomorrowStart = todayStart.add(const Duration(days: 1));
-
-    // Query for tasks where 'date' is today
-    return FirebaseFirestore.instance
-        .collection('tasks')
-        .where('date', isGreaterThanOrEqualTo: todayStart)
-        .where('date', isLessThan: tomorrowStart)
-        .snapshots();
-  }
+  final Tasksdata tasksdata = Tasksdata();
 
   @override
   Widget build(BuildContext context) {
@@ -177,20 +165,20 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     '0 Days',
-                    style: TextStyle(
+                    style: GoogleFonts.quicksand(
                       color: Colors.white,
                       fontSize: 45.0,
                     ),
                   ),
-                  SizedBox(height: 10.0),
+                  const SizedBox(height: 10.0),
                   Text(
                     'Current Streak',
-                    style: TextStyle(
+                    style: GoogleFonts.quicksand(
                       color: Colors.white,
                       fontSize: 30.0,
                     ),
@@ -204,9 +192,12 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.only(left: 16.0, top: 20.0),
           child: Row(
             children: [
-              const Text(
+              Text(
                 "Today's Goals",
-                style: TextStyle(fontSize: 25.0),
+                style: GoogleFonts.quicksand(
+                    fontSize: 25.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.amber[700]),
               ),
               IconButton(
                 icon: Icon(Icons.add_circle_outlined,
@@ -223,88 +214,68 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
+        // display today's goals here
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: getTodayTasks(), // Fetch tasks from Firebase
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
-              final todayTasks = snapshot.data!.docs;
-              if (todayTasks.isEmpty) {
-                return const Center(child: Text('No tasks for today!'));
-              }
-
-              return ListView.builder(
-                itemCount: todayTasks.length,
-                itemBuilder: (context, index) {
-                  final task = todayTasks[index];
-                  final taskDate = (task['date'] as Timestamp).toDate();
-                  final taskTime = task['time'];
-                  final taskNotes = task['notes'] ??
-                      'No notes available'; // Use 'No notes available' if no notes exist
-
-                  return ListTile(
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment
-                          .spaceBetween, // Align the text and icon on opposite ends
-                      children: [
-                        Text(task['name'], style: TextStyle(fontSize: 16.0)),
-                        IconButton(
-                          icon: Icon(Icons.info_outline),
-                          onPressed: () {
-                            // Show an AlertDialog with the task notes
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text('Task Notes'),
-                                  content: Text(taskNotes),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(); // Close the dialog
-                                      },
-                                      child: Text(
-                                        'Close',
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: const Color.fromARGB(
-                                                255, 134, 189, 71)),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${DateFormat.yMMMd().format(taskDate)} at $taskTime',
-                        ),
-                        SizedBox(
-                            height:
-                                4.0), // Add some space between date/time and notes
-                      ],
-                    ),
-                  );
-                },
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: tasksdata.getTodayTasks(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
               );
-            },
-          ),
-        ),
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            final tasks = snapshot.data;
+
+            return ListView.builder(
+              itemCount: tasks?.length,
+              itemBuilder: (context, index) {
+                final task = tasks?[index];
+                return Card(
+                  color: Colors.blue[50], // card colour
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 6.0),
+                  child: ListTile(
+                    title: Text(task?['Name'],
+                        style: GoogleFonts.quicksand(
+                            fontSize: 15.0, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      task?['Notes'],
+                      style: GoogleFonts.quicksand(
+                          fontSize: 12.0, fontWeight: FontWeight.w500),
+                    ),
+                    trailing: Text(
+                      "Due: ${_formatTime(task?['time'])}",
+                      style: GoogleFonts.quicksand(
+                          color: Colors.indigo[900],
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        )),
       ],
     );
+  }
+
+// format to 12-hour time with AM/PM
+  _formatTime(task) {
+    try {
+      final time = task.toDate();
+      final hour = time.hour > 12 ? time.hour - 12 : time.hour;
+      final minute = time.minute.toString().padLeft(2, '0');
+      final period = time.hour > 12 ? 'PM' : 'AM';
+      return '$hour:$minute $period';
+    } catch (e) {
+      return 'Invalid Time';
+    }
   }
 }
