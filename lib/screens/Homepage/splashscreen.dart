@@ -29,15 +29,21 @@ class SplashScreen extends StatefulWidget {
 class SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
-    super.initState();
-    // Navigate to Login Page after 3 seconds
-    Timer(const Duration(seconds: 3), () {
+    super.initState(); // Call the super method to initialize the state
+    _initializeApp(); // Initialize the app
+  }
+
+  // method to initialize the splash screen
+  Future<void> _initializeApp() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
             builder: (context) => LoginPage()), // Replace with your login page
       );
-    });
+    }
   }
 
   @override
