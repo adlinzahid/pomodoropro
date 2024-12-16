@@ -1,10 +1,10 @@
 // ignore_for_file: unused_element
 
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class Tasksdata {
@@ -17,15 +17,20 @@ class Tasksdata {
       ValueNotifier<TimeOfDay>(TimeOfDay.now());
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // dispose method to dispose of the controllers and value notifiers so that they don't take up memory
+  // To hold the stream subscription to manage it later
+  StreamSubscription<List<Map<String, dynamic>>>? _taskStreamSubscription;
+
+  // Dispose method to dispose of controllers, notifiers, and subscription
   void dispose() {
     taskNameController.dispose();
     taskDescriptionController.dispose();
     selectedDate.dispose();
     selectedTime.dispose();
+    _taskStreamSubscription
+        ?.cancel(); // Cancel the subscription to avoid memory leak
   }
 
-// constructor to initialize the controllers and value notifiers
+  // Constructor to initialize the controllers and value notifiers
   Tasksdata() {
     taskNameController.addListener(() {
       log('Task name: ${taskNameController.text}');
@@ -41,7 +46,6 @@ class Tasksdata {
     });
   }
 
-  //method to get the stream of tasks
   Stream<List<Map<String, dynamic>>> getTasksStream() {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -49,24 +53,37 @@ class Tasksdata {
       throw Exception('No user is logged in');
     }
 
-    //get the collection of tasks for the current user
-    return _firestore
+    // Get the collection of tasks for the current user
+    final tasksStream = _firestore
         .collection('users')
         .doc(user.uid)
         .collection('tasks')
         .orderBy('createdAt',
-            descending: true) // order the tasks by creation time
+            descending: true) // Order the tasks by creation time
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         final data = doc.data();
-        data['id'] = doc.id; //ensure the task ID is included in the data
+        data['id'] = doc.id; // Ensure the task ID is included in the data
         return data;
       }).toList();
     });
+
+    // Assign stream to _taskStreamSubscription and add error handling
+    _taskStreamSubscription = tasksStream.listen(
+      (taskList) {
+        // Handle task stream updates here
+        log("Received tasks: $taskList");
+      },
+      onError: (error) {
+        log("Error receiving tasks: $error");
+      },
+    );
+
+    return tasksStream;
   }
 
-  //method to add a task
+  // Method to add a task
   Future<void> addTask(
       String taskName, String taskDescription, DateTime selectedDate) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -100,7 +117,7 @@ class Tasksdata {
     });
   }
 
-  //methods to pick date and time
+  // Method to pick a date
   Future<void> pickDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -113,6 +130,7 @@ class Tasksdata {
     }
   }
 
+  // Method to pick a time
   Future<void> pickTime(BuildContext context) async {
     final pickedTime = await showTimePicker(
       context: context,
@@ -124,20 +142,13 @@ class Tasksdata {
     }
   }
 
+  // Method to format time
   String formatTime(TimeOfDay time, BuildContext context) {
     // Format the time according to the current locale.
     return MaterialLocalizations.of(context).formatTimeOfDay(time);
   }
 
-  Map<String, dynamic> toMap(BuildContext context) {
-    return {
-      'time': selectedTime.value
-          .format(context), // Ensure context is passed correctly
-      // other fields...
-    };
-  }
-
-  // function to delete a task
+  // Method to delete a task
   Future<void> deleteTask(String id) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -151,122 +162,13 @@ class Tasksdata {
           .doc(user.uid)
           .collection('tasks');
       await taskCollection.doc(id).delete();
+      log("Task with ID: $id deleted successfully.");
     } catch (e) {
-      if (kDebugMode) {
-        print("Deleting task with ID: $id");
-      }
-      if (kDebugMode) {
-        print("Task with ID $id deleted successfully.");
-      } else {
-        if (kDebugMode) {
-          print("Error deleting task with ID $id: $e");
-        }
-      }
-    }
-
-    // Fetch tasks in a date range
-    Future<List<Map<String, dynamic>>> fetchTasksInRange(
-        DateTime start, DateTime end) async {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tasks')
-          .where('date', isGreaterThanOrEqualTo: start)
-          .where('date', isLessThanOrEqualTo: end)
-          .get();
-
-      return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }).toList();
-    }
-
-    // Fetch tasks for a specific date
-    Stream<List<Map<String, dynamic>>> fetchTasksForDate(DateTime date) {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        throw Exception('No user is logged in');
-      }
-
-      final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
-
-      return FirebaseFirestore.instance
-          .collection('tasks')
-          .where('date', isGreaterThanOrEqualTo: startOfDay)
-          .where('date', isLessThanOrEqualTo: endOfDay)
-          .snapshots()
-          .map((snapshot) {
-        final tasks = snapshot.docs.map((doc) {
-          return {
-            'id': doc.id,
-            ...doc.data(),
-          };
-        }).toList();
-
-        // Debug: Print raw Firestore tasks
-        log('Fetched tasks from Firestore: $tasks');
-        return tasks;
-      });
-    }
-
-    //method to search for tasks
-    Future<List<Map<String, dynamic>>> searchTasks(String query) async {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        throw Exception('No user is logged in');
-      }
-
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('tasks')
-          .where('Name', isGreaterThanOrEqualTo: query)
-          .where('Name', isLessThanOrEqualTo: query + '\uf8ff')
-          .get();
-
-      return snapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }).toList();
+      log("Error deleting task with ID: $id - $e");
     }
   }
 
-  // Method to fetch tasks for today
-  Stream<List<Map<String, dynamic>>> getTodayTasks() {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (user == null) {
-      throw Exception('No user is logged in');
-    }
-
-    DateTime now = DateTime.now();
-    DateTime startOfDay = DateTime(now.year, now.month, now.day); // 12:00 AM
-    DateTime endOfDay = startOfDay
-        .add(const Duration(days: 1))
-        .subtract(const Duration(seconds: 1)); // 11:59:59 PM
-
-    return _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        .where('date', isGreaterThanOrEqualTo: startOfDay) // Start of the day
-        .where('date', isLessThanOrEqualTo: endOfDay) // End of the day
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return data;
-      }).toList();
-    });
-  }
-
-  // method to mark a task as completed, and move the completed task to the completedTask collection
+  // Method to mark a task as completed and update streaks
   Future<void> markTaskCompleted(String taskId) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -275,7 +177,7 @@ class Tasksdata {
     }
 
     try {
-      // fetch task data before marking it as completed
+      // Retrieve the task document to check if it exists
       final taskDoc = await _firestore
           .collection('users')
           .doc(user.uid)
@@ -286,37 +188,40 @@ class Tasksdata {
       if (taskDoc.exists) {
         final taskData = taskDoc.data();
 
-        // add the completed task to the completedTasks collection
+        // Set the 'completed' field to true and move task to completedTask collection
         await _firestore
             .collection('users')
             .doc(user.uid)
             .collection('completedTask')
             .doc(taskId)
-            .set(
-                taskData!); // set the task data in the completedTask collection
+            .set({
+          ...taskData!,
+          'completed':
+              true, // Ensure the task is marked as completed in the new collection
+        });
 
-        //remove the task from the tasks collection
+        await Future.delayed(const Duration(seconds: 2)); // Simulate a delay
+
+        // Delete the task from the 'tasks' collection
         await _firestore
             .collection('users')
             .doc(user.uid)
             .collection('tasks')
             .doc(taskId)
             .delete();
+
         log('Task marked as completed, moved to completedTasks and deleted from tasks.');
 
-        //update user's points and streak
+        // Update user points and streak after completing a task
         await updateUserPointsAndStreak();
       } else {
         log('Task with ID $taskId does not exist.');
       }
     } catch (e) {
-      if (kDebugMode) {
-        print('Error marking task as completed: $e');
-      }
+      log('Error marking task as completed: $e');
     }
   }
 
-// method to update user's points and streak
   Future<void> updateUserPointsAndStreak() async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -325,24 +230,26 @@ class Tasksdata {
     }
 
     try {
-      // fetch user's completed tasks
+      // Fetch completed tasks for the current user (tasks with 'completed' set to true)
       final completedTasks = await _firestore
           .collection('users')
           .doc(user.uid)
           .collection('completedTask')
-          .where('completed', isEqualTo: true)
+          .where('completed', isEqualTo: true) // Only get completed tasks
           .get();
 
       int completedTasksCount = completedTasks.docs.length;
       log('Completed tasks count: $completedTasksCount');
 
-      //calculate points and streak
+      // Points calculation: 1 point for each completed task
+      int points = completedTasksCount;
 
-      int points =
-          completedTasksCount; // points is equal to completed tasks counts
-      int streak = points; // streak is equal to points
+      // Streak calculation: 1 streak for every 5 completed tasks
+      int streak = (completedTasksCount >= 5)
+          ? (completedTasksCount ~/ 5) // Integer division for streaks
+          : 0; // No streak if fewer than 5 tasks
 
-      // update user's points and streak
+      // Update the user points and streak in Firestore
       await _firestore.collection('users').doc(user.uid).update({
         'points': points,
         'streak': streak,
@@ -350,10 +257,38 @@ class Tasksdata {
 
       log('User points and streak updated successfully: Points: $points, Streak: $streak');
     } catch (e) {
-      if (kDebugMode) {
-        print('Error updating user points and streak: $e');
-      }
+      log('Error updating user points and streak: $e');
     }
+  }
+
+  // Fetch tasks for today
+  Stream<List<Map<String, dynamic>>> getTodayTasks() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    DateTime now = DateTime.now();
+    DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    DateTime endOfDay = startOfDay
+        .add(const Duration(days: 1))
+        .subtract(const Duration(seconds: 1));
+
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('tasks')
+        .where('date', isGreaterThanOrEqualTo: startOfDay)
+        .where('date', isLessThanOrEqualTo: endOfDay)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
   }
 
   //method to fetch completed tasks
@@ -367,7 +302,7 @@ class Tasksdata {
     return _firestore
         .collection('users')
         .doc(user.uid)
-        .collection('CompletedTasks')
+        .collection('completedTask')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -376,5 +311,46 @@ class Tasksdata {
         return data;
       }).toList();
     });
+  }
+
+//method to fetch user's current points
+  Future<int> getUserPoints() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    try {
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final userData = userDoc.data();
+
+      if (userData != null && userData.containsKey('points')) {
+        final points = userData['points'];
+        return points is int ? points : 0; // Safely cast to int
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      throw Exception('Error fetching user points: $e');
+    }
+  }
+
+  //method to fetch user's current streak
+  Future<int> getUserStreak() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    final userDoc = await _firestore.collection('users').doc(user.uid).get();
+    final userData = userDoc.data();
+
+    if (userData != null && userData['streak'] != null) {
+      return userData['streak'];
+    } else {
+      return 0;
+    }
   }
 }
