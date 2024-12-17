@@ -26,10 +26,13 @@ class _TasklistpageState extends State<Tasklistpage> {
 
     // Fetch all tasks and initialize filteredTasks
     tasksdata.getTasksStream().listen((tasks) {
-      setState(() {
-        allTasks = tasks;
-        filteredTasks = allTasks;
-      });
+      if (mounted) {
+        // Ensuring the widget is still mounted
+        setState(() {
+          allTasks = tasks;
+          filteredTasks = tasks;
+        });
+      }
     });
   }
 
@@ -87,7 +90,6 @@ class _TasklistpageState extends State<Tasklistpage> {
                               task['date'].toDate(),
                             )
                           : 'No Date';
-                      // Assuming you have a Timestamp object named 'taskDate'
 
                       final formattedTime = task['time'] != null
                           ? DateFormat.jm().format((task['time'] as Timestamp)
@@ -108,7 +110,6 @@ class _TasklistpageState extends State<Tasklistpage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Task Name with Action Buttons
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -124,36 +125,75 @@ class _TasklistpageState extends State<Tasklistpage> {
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Container(
-                                          decoration: const BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle),
-                                          margin: const EdgeInsets.all(2.0),
-                                          child: IconButton(
-                                            icon: const Icon(
-                                              Icons.play_arrow,
-                                              color: Colors.white,
-                                              size: 18.0,
-                                            ),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PomodoroTimerPage(
-                                                    taskName:
-                                                        task['Name'] ?? '',
-                                                    taskDateTime:
-                                                        task['date'] != null
-                                                            ? task['date']
-                                                                .toDate()
-                                                                .toString()
-                                                            : '',
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.timer,
+                                            color: Colors.green,
+                                            size: 18.0,
                                           ),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PomodoroTimerPage(
+                                                  taskName: task['Name'] ?? '',
+                                                  taskDateTime:
+                                                      task['date'] != null
+                                                          ? task['date']
+                                                              .toDate()
+                                                              .toString()
+                                                          : '',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.check_circle_outline,
+                                            color: Colors.grey,
+                                            size: 18.0,
+                                          ),
+                                          onPressed: () async {
+                                            bool shouldComplete =
+                                                await _showConfirmationCompleteTask(
+                                              context,
+                                              task['id'],
+                                            );
+
+                                            if (shouldComplete) {
+                                              try {
+                                                // Mark task as completed
+                                                await tasksdata
+                                                    .markTaskCompleted(
+                                                        task['id']);
+
+                                                // Update points and streak after marking task as completed
+                                                await tasksdata
+                                                    .updateUserPointsAndStreak();
+
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                        'Task completed and points updated!'),
+                                                  ),
+                                                );
+
+                                                log('Task ${task['id']} completed, moved to CompletedTasks, and points updated.');
+                                              } catch (e) {
+                                                log('Error completing task: $e');
+                                              }
+                                              if (mounted) {
+                                                setState(() {
+                                                  filteredTasks.remove(task);
+                                                });
+                                              }
+                                            } else {
+                                              log('Task ${task['id']} not completed');
+                                            }
+                                          },
                                         ),
                                         IconButton(
                                           icon: const Icon(
@@ -230,6 +270,7 @@ class _TasklistpageState extends State<Tasklistpage> {
     );
   }
 
+  //method to confirm delete task
   Future<bool> _showConfirmationDeleteTask(
       BuildContext context, String taskId) async {
     bool? shouldDelete = await showDialog<bool>(
@@ -257,5 +298,35 @@ class _TasklistpageState extends State<Tasklistpage> {
     );
 
     return shouldDelete ?? false;
+  }
+
+  //method to confirm complete task
+  Future<bool> _showConfirmationCompleteTask(
+      BuildContext context, String taskId) async {
+    bool? shouldComplete = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Complete Task'),
+          content: Text('Are you sure you have completed this task?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Complete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    return shouldComplete ?? false;
   }
 }
