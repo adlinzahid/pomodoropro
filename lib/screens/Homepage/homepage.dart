@@ -174,7 +174,7 @@ class HomePage extends StatelessWidget {
                   children: [
                     Text(
                       '0 Days',
-                      style: GoogleFonts.quicksand(
+                      style: GoogleFonts.lilitaOne(
                         color: Colors.white,
                         fontSize: 45.0,
                       ),
@@ -182,7 +182,7 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 10.0),
                     Text(
                       'Current Streak',
-                      style: GoogleFonts.quicksand(
+                      style: GoogleFonts.lilitaOne(
                         color: Colors.white,
                         fontSize: 30.0,
                       ),

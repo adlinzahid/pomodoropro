@@ -8,12 +8,12 @@ class TargetGpaResultPage extends StatelessWidget {
   final double cumulativeGpa; // Updated: Using cumulativeGpa instead of currentGpa
 
   const TargetGpaResultPage({
-    Key? key,
+    super.key,
     required this.courses,
     required this.targetGpa,
     required this.cumulativeGpa,
     required double currentGpa,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

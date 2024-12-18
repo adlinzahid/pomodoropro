@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pomodoro_pro/services/tasksdata.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+
 
 class CalendarEventPage extends StatefulWidget {
   const CalendarEventPage({super.key});
@@ -52,7 +54,15 @@ class _CalendarEventPageState extends State<CalendarEventPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("C A L E N D A R", style: TextStyle(fontSize: 26)),
+        title: Text("Calendar", 
+        style: GoogleFonts.quicksand(
+            color: Colors.black,
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+          ),
+        
+        
+        ),
         centerTitle: true,
       ),
       body: Column(
