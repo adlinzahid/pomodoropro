@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // GPA result page
 class TargetGpaResultPage extends StatelessWidget {
@@ -10,7 +11,8 @@ class TargetGpaResultPage extends StatelessWidget {
     Key? key,
     required this.courses,
     required this.targetGpa,
-    required this.cumulativeGpa, required double currentGpa,
+    required this.cumulativeGpa,
+    required double currentGpa,
   }) : super(key: key);
 
   @override
@@ -19,11 +21,11 @@ class TargetGpaResultPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Target Mark Calculator',
-          style: TextStyle(
+          style: GoogleFonts.quicksand(
             color: Colors.black,
-            fontSize: 20,
+            fontSize: 25,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -41,9 +43,9 @@ class TargetGpaResultPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: Colors.grey.withOpacity(0.5), // Enhanced shadow
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -91,9 +93,9 @@ class TargetGpaResultPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: Colors.grey.withOpacity(0.5), // Enhanced shadow
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -101,7 +103,7 @@ class TargetGpaResultPage extends StatelessWidget {
                 children: [
                   Text(
                     'Target GPA: ${targetGpa.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
@@ -109,8 +111,8 @@ class TargetGpaResultPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Cumulative GPA: ${cumulativeGpa.toStringAsFixed(2)}', // Display cumulativeGpa
-                    style: const TextStyle(
+                    'Cumulative GPA: ${cumulativeGpa.toStringAsFixed(2)}',
+                    style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.blue,
@@ -125,14 +127,16 @@ class TargetGpaResultPage extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.0), // new changes on this back button radius
+                  borderRadius: BorderRadius.circular(10.0), // Button radius
                 ),
+                shadowColor: Colors.grey.withOpacity(0.5),
+                elevation: 8, // Button shadow
               ),
-              child: const Text(
+              child: Text(
                 'BACK',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -152,7 +156,7 @@ class TargetGpaResultPage extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4.0),
         child: Text(
           title,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
@@ -173,15 +177,15 @@ class TargetGpaResultPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(8.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              blurRadius: 6,
+              color: Colors.grey.withOpacity(0.5), // Enhanced shadow
+              blurRadius: 8,
               offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Text(
           value,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: Colors.black87,

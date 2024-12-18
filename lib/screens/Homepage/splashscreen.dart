@@ -35,7 +35,7 @@ class SplashScreenState extends State<SplashScreen> {
 
   // method to initialize the splash screen
   Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 5));
 
     if (mounted) {
       Navigator.pushReplacement(

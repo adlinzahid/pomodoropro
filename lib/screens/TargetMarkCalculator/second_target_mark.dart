@@ -75,7 +75,7 @@ class _SecondTargetMarkCalculatorState
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 175, 223, 245),
+                color: const Color.fromARGB(255, 167, 224, 250),
                 borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
@@ -179,13 +179,13 @@ class _SecondTargetMarkCalculatorState
               children: [
                 Text(
                   'Course Name',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextField(
                   decoration: InputDecoration(
                     hintText: 'Enter course name',
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 175, 223, 245),
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
@@ -207,13 +207,13 @@ class _SecondTargetMarkCalculatorState
               children: [
                 Text(
                   'Grade',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 DropdownButtonFormField<String>(
                   value: _courses[index]['grade'],
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 175, 223, 245),
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
@@ -244,13 +244,13 @@ class _SecondTargetMarkCalculatorState
               children: [
                 Text(
                   'Credits',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 TextField(
                   decoration: InputDecoration(
                     
                     filled: true,
-                    fillColor: const Color.fromARGB(255, 175, 223, 245),
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,
