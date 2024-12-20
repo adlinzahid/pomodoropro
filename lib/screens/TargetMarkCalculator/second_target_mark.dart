@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'setting_targetmark.dart'; // Import target mark settings page
 import 'gpa_calculator.dart'; // Import GPA calculator page
-
-void main() {
-  runApp(const MaterialApp(
-    home: SecondTargetMarkCalculator(),
-    debugShowCheckedModeBanner: false,
-  ));
-}
 
 class SecondTargetMarkCalculator extends StatefulWidget {
   final int currentCredits;
@@ -39,11 +33,11 @@ class _SecondTargetMarkCalculatorState
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
-        title: const Text(
+        title: Text(
           'Target Mark Calculator',
-          style: TextStyle(
+          style: GoogleFonts.quicksand(
             color: Colors.black,
-            fontSize: 20,
+            fontSize: 25,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -70,27 +64,39 @@ class _SecondTargetMarkCalculatorState
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Current Credits and GPA Box
+            // Current Credits and GPA Box with "CURRENT" centered on top
             Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: const Color.fromARGB(255, 167, 224, 250),
                 borderRadius: BorderRadius.circular(12.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withValues(alpha: 50),
+                    color: Colors.grey.withAlpha(204), //0.8 opacity x 255 = 204
                     blurRadius: 5,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Column(
                 children: [
-                  _buildCurrentStat(
-                      'CREDITS', widget.currentCredits.toString()),
-                  _buildCurrentStat(
-                      'CGPA', widget.currentGpa.toStringAsFixed(2)),
+                  Text(
+                    'CURRENT',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildCurrentStat(
+                          'CREDITS', widget.currentCredits.toString()),
+                      _buildCurrentStat(
+                          'CGPA', widget.currentGpa.toStringAsFixed(2)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -140,14 +146,14 @@ class _SecondTargetMarkCalculatorState
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
         ),
       ],
     );
@@ -161,79 +167,107 @@ class _SecondTargetMarkCalculatorState
           // Course Name
           Expanded(
             flex: 3,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Enter course name',
-                filled: true,
-                fillColor: Colors.blue[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide.none,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Course Name',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              onChanged: (value) {
-                _courses[index]['name'] = value;
-              },
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Enter course name',
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    _courses[index]['name'] = value;
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
           // Grade Dropdown
           Expanded(
             flex: 2,
-            child: DropdownButtonFormField<String>(
-              value: _courses[index]['grade'],
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: Colors.blue[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide.none,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Grade',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              hint: const Text('Grade'),
-              items: [
-                'A+',
-                'A',
-                'A-',
-                'B+',
-                'B',
-                'B-',
-                'C+',
-                'C',
-                'C-',
-                'D+',
-                'D',
-                'D-',
-                'F'
-              ]
-                  .map((grade) => DropdownMenuItem(
-                        value: grade,
-                        child: Text(grade),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                _courses[index]['grade'] = value;
-              },
+                DropdownButtonFormField<String>(
+                  value: _courses[index]['grade'],
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  items: [
+                    'A+',
+                    'A',
+                    'A-',
+                    'B+',
+                    'B',
+                    'B-',
+                    'C+',
+                    'C',
+                    'C-',
+                    'D+',
+                    'D',
+                    'D-',
+                    'F'
+                  ]
+                      .map((grade) => DropdownMenuItem(
+                            value: grade,
+                            child: Text(grade),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    _courses[index]['grade'] = value;
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
           // Credits
           Expanded(
             flex: 2,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Credits',
-                filled: true,
-                fillColor: Colors.blue[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide.none,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Credits',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                _courses[index]['credits'] = int.tryParse(value);
-              },
+                TextField(
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: const Color.fromARGB(255, 167, 224, 250),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    _courses[index]['credits'] = int.tryParse(value);
+                  },
+                ),
+              ],
             ),
           ),
         ],
@@ -255,11 +289,13 @@ class _SecondTargetMarkCalculatorState
           borderRadius: BorderRadius.circular(8.0),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        elevation: 5,
       ),
       icon: Icon(icon, color: Colors.white),
       label: Text(
         label,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: GoogleFonts.poppins(
+            color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
       ),
     );
   }
