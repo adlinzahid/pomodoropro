@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 
 void main() {
   runApp(const MaterialApp(
@@ -64,11 +65,11 @@ class _GradeSettingsPageState extends State<GradeSettingsPage> {
             Navigator.pop(context); // Go back to the previous page
           },
         ),
-        title: const Text(
+        title: Text(
           'Settings',
-          style: TextStyle(
+          style: GoogleFonts.quicksand(
             color: Colors.black,
-            fontSize: 18,
+            fontSize: 25,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -82,7 +83,7 @@ class _GradeSettingsPageState extends State<GradeSettingsPage> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: 76),
+                color: Colors.grey.withAlpha(77), // withAlpha(77) for transparency
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -91,10 +92,11 @@ class _GradeSettingsPageState extends State<GradeSettingsPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Edit Points',
-                style: TextStyle(
-                  fontSize: 18,
+                style: GoogleFonts.poppins(
+                  color: Colors.black,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -134,7 +136,7 @@ class _GradeSettingsPageState extends State<GradeSettingsPage> {
                         ),
                         child: Text(
                           grade,
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: grade == 'F'
@@ -208,9 +210,9 @@ class _GradeSettingsPageState extends State<GradeSettingsPage> {
                             width: 2,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'F',
-                          style: TextStyle(
+                          style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: Colors.red,
