@@ -25,7 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   static final List<Widget> _pages = <Widget>[
     HomePage(), // Updated HomePage widget
     TodoList(), // Links to the TodoListPage in `todo_page.dart`
-    CreateGroupPage(), // Links to the GroupCollaborationPage in `groupscreen.dart`
+    GroupCollaborationApp(), // Links to the GroupCollaborationPage in `groupscreen.dart`
     TargetMarkCalculator(), // Links to the TargetMarkPage in `target_mark.dart`
   ];
 
@@ -305,7 +305,7 @@ class HomePage extends StatelessWidget {
           // Display Yesterday's Completed Tasks
           SizedBox(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: tasksdata.getCompletedTasks(),
+              stream: tasksdata.getYesterdayCompletedTasks(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -341,8 +341,9 @@ class HomePage extends StatelessWidget {
                           style: GoogleFonts.quicksand(
                               fontSize: 12.0, fontWeight: FontWeight.w500),
                         ),
+                        // Display the time the task was completed
                         trailing: Text(
-                          "Completed: at ${_formatTime(task?['time'])}",
+                          "Completed: at ${_formatTime(DateTime.now())}",
                           style: GoogleFonts.quicksand(
                               color: Colors.indigo[900],
                               fontWeight: FontWeight.bold),
