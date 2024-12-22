@@ -168,7 +168,7 @@ class Tasksdata {
     }
   }
 
-  // Method to mark a task as completed and update streaks
+  // Method to mark a task as completed and update points
   Future<void> markTaskCompleted(String taskId) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -212,8 +212,8 @@ class Tasksdata {
 
         log('Task marked as completed, moved to completedTasks and deleted from tasks.');
 
-        // Update user points and streak after completing a task
-        await updateUserPointsAndStreak();
+        // Update user points after completing a task
+        await updateUserPoints();
       } else {
         log('Task with ID $taskId does not exist.');
       }
@@ -222,7 +222,7 @@ class Tasksdata {
     }
   }
 
-  Future<void> updateUserPointsAndStreak() async {
+  Future<void> updateUserPoints() async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -244,31 +244,48 @@ class Tasksdata {
       // Points calculation: 1 point for each completed task
       int points = completedTasksCount;
 
-      // Streak calculation: 1 streak for every 5 completed tasks
-      int streak = (completedTasksCount >= 5)
-          ? (completedTasksCount ~/ 5) // Integer division for streaks
-          : 0; // No streak if fewer than 5 tasks
-
-      // Fetch the user's current streak
-      int currentStreak = await getUserStreak();
-
-      // Check if the user has completed 5 tasks today
-      if (completedTasksCount % 5 == 0) {
-        streak = currentStreak + 1; // Increment the streak
-      } else {
-        streak = currentStreak; // Keep the current streak
-      }
-
-
       // Update the user points and streak in Firestore
       await _firestore.collection('users').doc(user.uid).update({
         'points': points,
-        'streak': streak,
       });
 
-      log('User points and streak updated successfully: Points: $points, Streak: $streak');
+      log('User points and streak updated successfully: Points: $points');
     } catch (e) {
       log('Error updating user points and streak: $e');
+    }
+  }
+
+  //trigger the streak when user completed 5 tasks in a day
+  Future<void> updateUserStreak() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('No user is logged in');
+    }
+
+    try {
+      // Fetch completed tasks for the current user (tasks with 'completed' set to true)
+      final completedTasks = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('completedTask')
+          .where('completed', isEqualTo: true) // Only get completed tasks
+          .get();
+
+      int completedTasksCount = completedTasks.docs.length;
+      log('Completed tasks count: $completedTasksCount');
+
+      // Check if the user has completed 5 tasks in a day
+      if (completedTasksCount >= 5) {
+        // Update the user streak in Firestore
+        await _firestore.collection('users').doc(user.uid).update({
+          'streak': FieldValue.increment(1),
+        });
+
+        log('User streak updated successfully');
+      }
+    } catch (e) {
+      log('Error updating user streak: $e');
     }
   }
 
@@ -302,18 +319,31 @@ class Tasksdata {
     });
   }
 
-  //method to fetch completed tasks
-  Stream<List<Map<String, dynamic>>> getCompletedTasks() {
+  //method to fetch completed tasks from yesterday
+  Stream<List<Map<String, dynamic>>> getYesterdayCompletedTasks() {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
       throw Exception('No user is logged in');
     }
 
+    DateTime now = DateTime.now();
+    DateTime startOfDay = DateTime(now.year, now.month, now.day);
+    // ignore: unused_local_variable
+    DateTime endOfDay = startOfDay
+        .add(const Duration(days: 1))
+        .subtract(const Duration(seconds: 1));
+
+    DateTime yesterdayStartOfDay = startOfDay.subtract(const Duration(days: 1));
+    DateTime yesterdayEndOfDay =
+        startOfDay.subtract(const Duration(seconds: 1));
+
     return _firestore
         .collection('users')
         .doc(user.uid)
         .collection('completedTask')
+        .where('date', isGreaterThanOrEqualTo: yesterdayStartOfDay)
+        .where('date', isLessThanOrEqualTo: yesterdayEndOfDay)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
@@ -350,6 +380,7 @@ class Tasksdata {
   //method to fetch user's current streak
   Future<int> getUserStreak() async {
     final user = FirebaseAuth.instance.currentUser;
+    // initialising the streak to 0
 
     if (user == null) {
       throw Exception('No user is logged in');
