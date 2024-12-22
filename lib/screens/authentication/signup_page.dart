@@ -37,6 +37,7 @@ class _SignUpPageState extends State<SignUpPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            const SizedBox(height: 100),
             // App logo or illustration
             Center(
               child: Image.asset(
@@ -175,7 +176,8 @@ class _SignUpPageState extends State<SignUpPage> {
         log('User signed up successfully');
         Navigator.pushReplacement(
             // ignore: use_build_context_synchronously
-            context, MaterialPageRoute(builder: (context) => Wrapper()));
+            context,
+            MaterialPageRoute(builder: (context) => Wrapper()));
       }
     } finally {
       setState(() {
