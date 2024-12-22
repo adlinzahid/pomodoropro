@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class Auth {
   final _auth = FirebaseAuth.instance;
@@ -53,6 +54,24 @@ class Auth {
     } catch (e) {
       log("Error in signing out: $e"); // Log the error
     }
+  }
+
+  //sign in with google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final googleUser = await GoogleSignIn().signIn();
+      final googleAuth = await googleUser?.authentication;
+
+      final cred = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      return await _auth.signInWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      exceptionHandler(e.code); // Log the error
+    }
+    return null;
   }
 
   exceptionHandler(String code) {
