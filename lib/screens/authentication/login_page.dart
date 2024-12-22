@@ -7,7 +7,6 @@ import 'signup_page.dart';
 import '../../services/auth.dart';
 import '../../widgets/wrapper.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -38,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: 100), // Add some space at the top
               Center(
                 child: Image.asset(
                   'assets/images/PomodoroProLogo.png',
@@ -95,11 +95,11 @@ class _LoginPageState extends State<LoginPage> {
                     : Text(
                         'Sign In',
                         style: GoogleFonts.roboto(
-                            fontSize: 15, color: Colors.white),
+                            fontSize: 18, color: Colors.white),
                       ),
               ),
               const SizedBox(height: 20),
-              // _googleButton(), // Move Google Button Here
+              _googleButton(), // Move Google Button Here
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -143,7 +143,8 @@ class _LoginPageState extends State<LoginPage> {
         log('User logged in successfully');
         Navigator.pushReplacement(
             // ignore: use_build_context_synchronously
-            context, MaterialPageRoute(builder: (context) => Wrapper()));
+            context,
+            MaterialPageRoute(builder: (context) => Wrapper()));
       }
     } finally {
       setState(() {
@@ -177,6 +178,50 @@ class _LoginPageState extends State<LoginPage> {
       MaterialPageRoute(
         builder: (context) => SignUpPage(
           showLoginPage: () {},
+        ),
+      ),
+    );
+  }
+
+  Widget _googleButton() {
+    return ElevatedButton.icon(
+      onPressed: _isLoading
+          ? null
+          : () async {
+              setState(() {
+                _isLoading = true;
+              });
+              try {
+                final user = await _auth.signInWithGoogle();
+                if (user != null) {
+                  log('User logged in successfully');
+                  Navigator.pushReplacement(
+                      // ignore: use_build_context_synchronously
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Wrapper(),
+                      ));
+                }
+              } finally {
+                setState(() {
+                  _isLoading = false;
+                });
+              }
+            },
+      icon: Image.asset(
+        'assets/images/google_logo.png',
+        height: 24.0,
+        width: 24.0,
+      ),
+      label: Text(
+        'Sign in with Google',
+        style: GoogleFonts.roboto(fontSize: 18, color: Colors.blueAccent),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18.0),
         ),
       ),
     );
