@@ -50,119 +50,118 @@ class SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFA8E6A3), Color(0xFF74B16F)],
+      body: Stack(
+        children: [
+          // Top left bubble
+          Positioned(
+            top: -50,
+            left: -50,
+            child: _buildBubble(200, const Color(0xFFA8E6A3)), // Soft green
           ),
-        ),
-        child: Stack(
-          children: [
-        // Top left bubble
-        Positioned(
-          top: -50,
-          left: -50,
-          child: _buildBubble(200, const Color(0xFFA8E6A3)), // Soft green
-        ),
-        // Bottom right bubble
-        Positioned(
-          bottom: -50,
-          right: -50,
-          child: _buildBubble(200, const Color(0xFF74B16F)), // Dark green
-        ),
-        // Additional bubbles
-        Positioned(
-          top: 150,
-          right: -80,
-          child: _buildBubble(150, const Color(0xFFA8E6A3)), // Soft green
-        ),
-        Positioned(
-          bottom: 150,
-          left: -80,
-          child: _buildBubble(120, const Color(0xFF74B16F)), // Dark green
-        ),
-        Positioned(
-          top: 300,
-          left: 50,
-          child: _buildBubble(100, const Color(0xFFA8E6A3)), // Soft green
-        ),
-        Positioned(
-          bottom: 300,
-          right: 50,
-          child: _buildBubble(80, const Color(0xFF74B16F)), // Dark green
-        ),
-        // Centered logo and text
-        Center(
-          child: Column(
+          // Bottom right bubble
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: _buildBubble(200, const Color(0xFF74B16F)), // Dark green
+          ),
+          // Additional bubbles
+          Positioned(
+            top: 150,
+            right: -80,
+            child: _buildBubble(150, const Color(0xFFA8E6A3)), // Soft green
+          ),
+          Positioned(
+            bottom: 150,
+            left: -80,
+            child: _buildBubble(120, const Color(0xFF74B16F)), // Dark green
+          ),
+          Positioned(
+            top: 300,
+            left: 50,
+            child: _buildBubble(100, const Color(0xFFA8E6A3)), // Soft green
+          ),
+          Positioned(
+            bottom: 300,
+            right: 50,
+            child: _buildBubble(80, const Color(0xFF74B16F)), // Dark green
+          ),
+          // Centered logo and text
+          Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Tilted "P"
-              Transform.rotate(
-            angle: -0.2, // Tilt the "P" slightly
-            child: Text(
-              "P",
-              style: GoogleFonts.angkor(
-                fontSize: 128,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-              ),
-              Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "omodoro",
-                style: GoogleFonts.angkor(
-              fontSize: 60,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-              height:
-                  0.5, // Adjust the height for tighter spacing
-              shadows: [
-                Shadow(
-                  offset: Offset(1, 1),
-                  blurRadius: 2,
-                  color: Colors.grey.shade600,
-                ),
-              ],
-                ),
-              ),
-              Text(
-                "ro",
-                style: GoogleFonts.angkor(
-              fontSize: 50,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
-                ),
-              ),
-            ],
-              ),
-              const SizedBox(width: 10),
-              Icon(
-            Icons.alarm,
-            size: 80,
-            color: Colors.black,
-            shadows: [
-              Shadow(
-                offset: Offset(1, 1),
-                blurRadius: 2,
-                color: Colors.grey.shade600,
-              ),
-            ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Tilted "P"
+                  Transform.rotate(
+                    angle: -0.2, // Tilt the "P" slightly
+                    child: Text(
+                      "P",
+                      style: GoogleFonts.angkor(
+                        fontSize: 128,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "omodoro",
+                              style: GoogleFonts.angkor(
+                                fontSize: 60,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height:
+                                    0.5, // Adjust the height for tighter spacing
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(1, 1),
+                                    blurRadius: 2,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                                width:
+                                    8), // Add spacing between text and icon
+                            Icon(
+                              Icons.alarm,
+                              size: 50, // Adjust icon size to match the text
+                              color: Colors.black,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Text(
+                          "ro",
+                          style: GoogleFonts.angkor(
+                            fontSize: 50,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-            ],
-          ),
-        ),
-          ],
-        ),
+          
+        ],
       ),
     );
   }
