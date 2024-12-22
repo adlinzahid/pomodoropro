@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 import '../../services/tasksdata.dart';
 import 'pomodoro_timer_page.dart';
 
-
 class Tasklistpage extends StatefulWidget {
   const Tasklistpage({super.key});
 
@@ -174,7 +173,7 @@ class _TasklistpageState extends State<Tasklistpage> {
 
                                                 // Update points and streak after marking task as completed
                                                 await tasksdata
-                                                    .updateUserPointsAndStreak();
+                                                    .updateUserPoints();
 
                                                 ScaffoldMessenger.of(context)
                                                     .showSnackBar(

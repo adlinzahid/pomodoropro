@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "867363482583",
+    "firebase_url": "https://pomodoropro-211-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "pomodoropro-211",
+    "storage_bucket": "pomodoropro-211.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867363482583:android:0925ddd58352c7b4d7f992",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "867363482583-oj6n5rdsvg378cvva0m5r6ogtmtn9nj7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_application_1",
+            "certificate_hash": "4d3de7e4c4057587b2c641d61b3ea0f19ee084f6"
+          }
+        },
+        {
+          "client_id": "867363482583-l6oruhpf63ke83d183122j5g7hdou8bb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZgE1IGcM-gT5fndeYz2mMNr4teu2_CZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "867363482583-l6oruhpf63ke83d183122j5g7hdou8bb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "867363482583-khjjlq2jm8sqasu8jtnqmrdsnp614ot5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867363482583:android:9e237af9aaabb01cd7f992",
+        "android_client_info": {
+          "package_name": "com.new_organization_id.PomodoroPro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "867363482583-sqjvpg9508brco4jrm8gphnkokivoiga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.new_organization_id.PomodoroPro",
+            "certificate_hash": "4d3de7e4c4057587b2c641d61b3ea0f19ee084f6"
+          }
+        },
+        {
+          "client_id": "867363482583-l6oruhpf63ke83d183122j5g7hdou8bb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZgE1IGcM-gT5fndeYz2mMNr4teu2_CZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "867363482583-l6oruhpf63ke83d183122j5g7hdou8bb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "867363482583-khjjlq2jm8sqasu8jtnqmrdsnp614ot5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApplication1"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
