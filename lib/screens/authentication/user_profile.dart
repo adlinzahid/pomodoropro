@@ -3,11 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import '../../services/auth.dart';
 import '../Homepage/homepage.dart';
 import 'login_page.dart';
-
 
 class UserProfile extends StatefulWidget {
   const UserProfile({super.key});
@@ -63,7 +61,6 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
-  // Helper widget to build the text fields
   Widget _buildTextField(
       String label, TextEditingController controller, IconData icon) {
     return Padding(
@@ -82,7 +79,7 @@ class _UserProfileState extends State<UserProfile> {
         ),
         child: ListTile(
           leading: Icon(icon, color: Colors.green.shade700),
-          title: _isEditing
+          title: label == 'Edit Your Name' && _isEditing
               ? TextField(
                   controller: controller,
                   decoration: InputDecoration(
@@ -94,21 +91,70 @@ class _UserProfileState extends State<UserProfile> {
                 )
               : Text(
                   controller.text.isEmpty
-                      ? 'No Name Available'
+                      ? 'No Data Available'
                       : controller.text,
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
                 ),
-          subtitle: _isEditing
-              ? null
+          subtitle: label == 'Your Email'
+              ? FutureBuilder(
+                  future: FirebaseAuth.instance.currentUser?.reload(),
+                  builder: (context, snapshot) {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user != null && user.emailVerified) {
+                      return Row(
+                        children: [
+                          Icon(Icons.check_circle,
+                              color: Colors.green.shade700, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Email Verified',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.green.shade700),
+                          ),
+                        ],
+                      );
+                    } else {
+                      return GestureDetector(
+                        onTap: () {
+                          _showEmailVerificationDialog(context);
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline,
+                                color: Colors.red, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Email Not Verified',
+                              style: TextStyle(fontSize: 12, color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                )
               : Text(
                   label,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
+          trailing: label == 'Edit Your Name' && _isEditing
+              ? IconButton(
+                  icon: Icon(Icons.check, color: Colors.green.shade700),
+                  onPressed: () {
+                    setState(() {
+                      _isEditing = false; // Stop editing after saving
+                    });
+                  })
+              : const SizedBox.shrink(),
           onTap: () {
-            if (!_isEditing) {
-              setState(() {
-                _isEditing = true; // Enable editing mode
-              });
+            if (label == 'Edit Your Name') {
+              if (_isEditing) {
+                updateUserName();
+              } else {
+                setState(() {
+                  _isEditing = true; // Enable editing mode
+                });
+              }
             }
           },
         ),
@@ -168,23 +214,27 @@ class _UserProfileState extends State<UserProfile> {
             ),
             const SizedBox(height: 20),
             if (_isEditing) // Show the "Save Changes" button only in editing mode
-              ElevatedButton(
+              Padding(
+              padding: const EdgeInsets.only(bottom: 20), // Add padding to separate the buttons
+              child: ElevatedButton(
                 onPressed: updateUserName,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+                backgroundColor: Colors.green.shade700,
+                padding:
+                  const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
                 ),
                 child: Text(
-                  'Save Changes',
-                  style:
-                      GoogleFonts.quicksand(fontSize: 13, color: Colors.white),
+                'Save Changes',
+                style:
+                  GoogleFonts.quicksand(fontSize: 10, color: Colors.white),
                 ),
               ),
-            Column(
+              ),
+            if (!_isEditing) // Show the buttons only when not in editing mode
+              Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Wrap both buttons in a SizedBox with the same width
@@ -243,6 +293,28 @@ class _UserProfileState extends State<UserProfile> {
           ],
         ),
       ),
+    );
+  }
+
+  //helper method to show email verification dialog
+  void _showEmailVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Email Verification'),
+          content: const Text(
+              'Please verify your email address to access this feature.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Verify'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
