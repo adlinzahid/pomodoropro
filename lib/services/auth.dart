@@ -1,11 +1,16 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/material.dart';
 
 class Auth {
-  final _auth = FirebaseAuth.instance;
+  final TextEditingController emailController = TextEditingController();
+  final _auth =
+      FirebaseAuth.instance; // Create an instance of the FirebaseAuth class
 
 //create user with email and password
   Future<User?> createUserWithEmailAndPassword(
@@ -47,7 +52,6 @@ class Auth {
   }
 
   //sign out user
-
   Future<void> signOut() async {
     try {
       await _auth.signOut();
