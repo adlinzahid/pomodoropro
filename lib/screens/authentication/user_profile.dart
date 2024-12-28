@@ -215,81 +215,82 @@ class _UserProfileState extends State<UserProfile> {
             const SizedBox(height: 20),
             if (_isEditing) // Show the "Save Changes" button only in editing mode
               Padding(
-              padding: const EdgeInsets.only(bottom: 20), // Add padding to separate the buttons
-              child: ElevatedButton(
-                onPressed: updateUserName,
-                style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade700,
-                padding:
-                  const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                padding: const EdgeInsets.only(
+                    bottom: 20), // Add padding to separate the buttons
+                child: ElevatedButton(
+                  onPressed: updateUserName,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 35, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Changes',
+                    style: GoogleFonts.quicksand(
+                        fontSize: 10, color: Colors.white),
+                  ),
                 ),
-                ),
-                child: Text(
-                'Save Changes',
-                style:
-                  GoogleFonts.quicksand(fontSize: 10, color: Colors.white),
-                ),
-              ),
               ),
             if (!_isEditing) // Show the buttons only when not in editing mode
               Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Wrap both buttons in a SizedBox with the same width
-                SizedBox(
-                  width: 200, // Specify the same width for both buttons
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      // Navigate to the home page
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => MyHomePage()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Wrap both buttons in a SizedBox with the same width
+                  SizedBox(
+                    width: 200, // Specify the same width for both buttons
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Navigate to the home page
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => MyHomePage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Back Home',
+                        style: GoogleFonts.quicksand(
+                            fontSize: 13, color: Colors.white),
                       ),
                     ),
-                    child: Text(
-                      'Back Home',
-                      style: GoogleFonts.quicksand(
-                          fontSize: 13, color: Colors.white),
-                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: 200, // Specify the same width for both buttons
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await Auth().signOut();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginPage()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: 200, // Specify the same width for both buttons
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await Auth().signOut();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: Text(
+                        'Sign Out',
+                        style: GoogleFonts.quicksand(
+                            fontSize: 13, color: Colors.white),
                       ),
                     ),
-                    child: Text(
-                      'Sign Out',
-                      style: GoogleFonts.quicksand(
-                          fontSize: 13, color: Colors.white),
-                    ),
                   ),
-                ),
-              ],
-            )
+                ],
+              )
           ],
         ),
       ),
