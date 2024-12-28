@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pomodororpo/screens/GroupCollab/view_groups.dart';
 import 'create_group.dart'; // Import the CreateGroupPage file
 import 'join_group.dart'; // Import the JoinGroupPage file
 
@@ -50,7 +51,7 @@ class GroupCollaborationPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const CreateGroupPage(),
+                  builder: (context) => CreateGroup(),
                 ),
               );
             },
@@ -69,16 +70,32 @@ class GroupCollaborationPage extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 50),
-          const Center(
-            child: Text(
-              'No Groups Created',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
+          const SizedBox(height: 15),
+          // View Groups Button (New button)
+          _buildButton(
+            context,
+            label: 'View Groups',
+            icon: Icons.view_column, // Or any icon that suits the button
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ViewGroupsList(), // Navigate to the grid screen
+                ),
+              );
+            },
           ),
+          // const SizedBox(height: 50),
+          // const Center(
+          //   child: Text(
+          //     'No Groups Created',
+          //     style: TextStyle(
+          //       color: Colors.grey,
+          //       fontSize: 14,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
