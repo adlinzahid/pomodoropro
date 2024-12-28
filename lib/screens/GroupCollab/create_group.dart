@@ -1,25 +1,54 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import for Firestore
+import 'package:pomodororpo/screens/GroupCollab/group_data_handler.dart';
+import 'created_group_details.dart'; // Import the CreatedGroupDetails file
 
-
-void main() {
-  runApp(const CreateGroupApp());
+class CreateGroup extends StatefulWidget {
+  const CreateGroup({super.key});
+  @override
+  State<CreateGroup> createState() => _CreateGroupState();
 }
 
-class CreateGroupApp extends StatelessWidget {
-  const CreateGroupApp({super.key});
+class _CreateGroupState extends State<CreateGroup> {
+  // Instance of the group data handler class
+  final GroupDataHandler groupDataHandler = GroupDataHandler();
+
+  // Controllers to handle the input fields
+  final TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  // Get the current logged-in user ID
+  String get userId {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.uid ?? ''; // Returns user ID or empty string if not logged in
+  }
+
+  // Get the username from the input controller
+  String get username => _usernameController.text;
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const CreateGroupPage(),
-    );
+  void initState() {
+    super.initState();
+    fetchUsername(); // Auto-fill username on screen load
   }
-}
 
-class CreateGroupPage extends StatelessWidget {
-  const CreateGroupPage({super.key});
+  void fetchUsername() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      setState(() {
+        _usernameController.text = userDoc.data()?['username'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,9 +91,43 @@ class CreateGroupPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Username Input
+              // Username Display Box
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white, // Background color for contrast
+                  borderRadius: BorderRadius.circular(8), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // Center the row contents
+                  children: [
+                    Icon(Icons.person_2, color: Colors.grey), // User icon
+                    SizedBox(width: 10), // Add space between icon and text
+                    Text(
+                      FirebaseAuth.instance.currentUser?.displayName ??
+                          'Username',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18, // Larger font size for prominence
+                        color: Colors.grey, // Dark green text color
+                      ),
+                      textAlign: TextAlign.center, // Center-align the text
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20), // Add spacing between elements
+
+              // Group Name Input
               Text(
-                'Username',
+                'Group Name',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -72,12 +135,12 @@ class CreateGroupPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildInputField(),
+              _buildInputField(_groupNameController, 'Enter Group Name'),
               const SizedBox(height: 20),
 
-              // Code Input
+              // Group Description Input
               Text(
-                'Code',
+                'Group Description',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -85,31 +148,109 @@ class CreateGroupPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildInputField(),
-              const SizedBox(height: 10),
-
-              // Instructional Text
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '• use this code to create the group',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.black87,
-                  ),
-                ),
+              _buildInputField(
+                _descriptionController,
+                'Enter Group Description',
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-              // "CREATE" Text Button
+              // "CREATE" Button
               GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const GroupTaskCreatedPage(),
-                    ),
-                  );
+                onTap: () async {
+                  final user = FirebaseAuth.instance.currentUser;
+
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content:
+                            Text("You must be logged in to create a group"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  String groupName = _groupNameController.text.trim();
+                  String description = _descriptionController.text.trim();
+
+                  // Validate input
+                  if (groupName.isEmpty || description.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("All fields are required"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  try {
+                    // Call createGroup to save group in Firestore
+                    // Add creator to the members array during group creation
+                    String uniqueCode = await groupDataHandler.createGroup(
+                      context,
+                      FirebaseAuth.instance.currentUser!.uid,
+                      groupName,
+                      description,
+                      members: [
+                        {
+                          'id': FirebaseAuth.instance.currentUser!.uid,
+                          'username':
+                              FirebaseAuth.instance.currentUser!.displayName ??
+                                  '',
+                          'status': 'active',
+                        },
+                      ],
+                    );
+
+                    // Clear input fields
+                    _groupNameController.clear();
+                    _descriptionController.clear();
+                    _usernameController.clear();
+
+                    // Show dialog with the unique code and a view button
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text("Group Created"),
+                            content: Text(
+                              "Your group's unique code is: $uniqueCode",
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // Close dialog
+                                },
+                                child: const Text("OK"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context); // Close dialog
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => GroupDetailsScreen(
+                                          uniqueCode: uniqueCode),
+                                    ),
+                                  );
+                                },
+                                child: const Text("View Group"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Failed to create group: $e"),
+                        ),
+                      );
+                    }
+                  }
                 },
                 child: Text(
                   'CREATE',
@@ -121,7 +262,7 @@ class CreateGroupPage extends StatelessWidget {
                     decorationColor: Colors.white,
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
@@ -130,9 +271,9 @@ class CreateGroupPage extends StatelessWidget {
   }
 
   // Input Field Widget
-  Widget _buildInputField() {
+  Widget _buildInputField(TextEditingController controller, String hintText) {
     return Container(
-      height: 40,
+      height: 50,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -145,29 +286,27 @@ class CreateGroupPage extends StatelessWidget {
         ],
       ),
       child: TextField(
-        style: GoogleFonts.poppins(color: Colors.black87),
-        decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(horizontal: 10),
+        controller: controller,
+        style: GoogleFonts.poppins(color: Colors.grey[800], fontSize: 15),
+        textAlign: TextAlign.center, // Centers the text inside the input box
+        keyboardType: TextInputType.text, // Set keyboard type to text
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(
+              color: Colors.grey,
+              fontSize: 15), // Sets grey color for hint text
+          contentPadding: EdgeInsets.all(5), // Ensures proper centering
           border: InputBorder.none,
         ),
       ),
     );
   }
-}
-
-// Dummy Group Task Created Page
-class GroupTaskCreatedPage extends StatelessWidget {
-  const GroupTaskCreatedPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Group Task Created'),
-      ),
-      body: const Center(
-        child: Text('This is the Group Task Created Page'),
-      ),
-    );
+  void dispose() {
+    _groupNameController.dispose();
+    _descriptionController.dispose();
+    _usernameController.dispose();
+    super.dispose();
   }
 }
