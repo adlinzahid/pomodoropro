@@ -13,9 +13,29 @@ class Auth {
       FirebaseAuth.instance; // Create an instance of the FirebaseAuth class
 
 //create user with email and password
-  Future<User?> createUserWithEmailAndPassword(
-      String email, String password, String fullName) async {
+  Future<User?> createUserWithEmailAndPassword(String email, String password,
+      String fullName, BuildContext context) async {
     try {
+      if (email.isEmpty || password.isEmpty || fullName.isEmpty) {
+        log('Email, password or full name is empty');
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text('Error in signing up', textAlign: TextAlign.center),
+                content: Text('Email, password or full name is empty'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            });
+        return null;
+      }
       final creds = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -32,21 +52,107 @@ class Auth {
         'createdAt': FieldValue.serverTimestamp()
       });
       return creds.user;
-    } on FirebaseAuthException catch (e) {
-      exceptionHandler(e.code); // Log the error
+    } catch (e) {
+      //check if email is already registered
+      if (e.toString().contains('email-already-in-use')) {
+        log('Email already in use');
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text(
+                  'Error in signing up',
+                  textAlign: TextAlign.center,
+                ),
+                content: Text('Email is already being used by another account'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            });
+      } //check if password is less than 6 characters
+      else if (e.toString().contains('weak-password')) {
+        log('Password is too weak');
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: Text('Error in signing up', textAlign: TextAlign.center),
+                content: Text(
+                    'Password is too weak, must be at least 6 characters and contain a number'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text('OK'),
+                  ),
+                ],
+              );
+            });
+      } else {
+        log('Error in creating user: $e'); // Log the error
+      }
+      return null;
     }
-    return null;
   }
 
   //sign in user with email and password
   Future<User?> loginUserWithEmailAndPassword(
-      String email, String password) async {
+      String email, String password, BuildContext context) async {
     try {
+      if (email.isEmpty || password.isEmpty) {
+        log('Email or password is empty');
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Error', textAlign: TextAlign.center),
+              content: Text('Email or password is empty'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+        return null;
+      }
+
       final creds = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
       return creds.user;
-    } on FirebaseAuthException catch (e) {
-      exceptionHandler(e.code); // Log the error
+    } catch (e) {
+      //check if email is registered
+      if (!e.toString().contains('no user record')) {
+        log('Error in signing in: $e'); // Log the error
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Error', textAlign: TextAlign.center),
+              content: Text('Invalid email or password'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
     return null;
   }
