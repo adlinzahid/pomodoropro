@@ -171,6 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
         _fullNameController.text.trim(),
+        context,
       );
       if (user != null) {
         log('User signed up successfully');
