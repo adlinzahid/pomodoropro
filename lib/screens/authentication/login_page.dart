@@ -138,7 +138,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final user = await _auth.loginUserWithEmailAndPassword(
-          _emailController.text.trim(), _passwordController.text.trim());
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          context);
       if (user != null) {
         log('User logged in successfully');
         Navigator.pushReplacement(
