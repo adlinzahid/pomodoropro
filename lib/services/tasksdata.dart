@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +45,7 @@ class Tasksdata {
     });
   }
 
+//method to get the stream of tasks
   Stream<List<Map<String, dynamic>>> getTasksStream() {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -321,7 +321,7 @@ class Tasksdata {
 
   //method to fetch completed tasks from yesterday
   Stream<List<Map<String, dynamic>>> getYesterdayCompletedTasks() {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser; // indicates the current user
 
     if (user == null) {
       throw Exception('No user is logged in');
