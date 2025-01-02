@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import for Firestore
 import 'package:pomodororpo/screens/GroupCollab/group_data_handler.dart';
 import 'created_group_details.dart'; // Import the CreatedGroupDetails file
 
@@ -19,7 +18,6 @@ class _CreateGroupState extends State<CreateGroup> {
 
   // Controllers to handle the input fields
   final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   // Get the current logged-in user ID
@@ -29,25 +27,14 @@ class _CreateGroupState extends State<CreateGroup> {
   }
 
   // Get the username from the input controller
-  String get username => _usernameController.text;
+  String get username => FirebaseAuth.instance.currentUser?.displayName ?? '';
+
+  // Variable to store the selected due date
+  DateTime? _selectedDueDate;
 
   @override
   void initState() {
     super.initState();
-    fetchUsername(); // Auto-fill username on screen load
-  }
-
-  void fetchUsername() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId != null) {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      setState(() {
-        _usernameController.text = userDoc.data()?['username'] ?? '';
-      });
-    }
   }
 
   @override
@@ -91,122 +78,89 @@ class _CreateGroupState extends State<CreateGroup> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Username Display Box
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white, // Background color for contrast
-                  borderRadius: BorderRadius.circular(8), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment.center, // Center the row contents
-                  children: [
-                    Icon(Icons.person_2, color: Colors.grey), // User icon
-                    SizedBox(width: 10), // Add space between icon and text
-                    Text(
-                      FirebaseAuth.instance.currentUser?.displayName ??
-                          'Username',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18, // Larger font size for prominence
-                        color: Colors.grey, // Dark green text color
-                      ),
-                      textAlign: TextAlign.center, // Center-align the text
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20), // Add spacing between elements
-
-              // Group Name Input
-              Text(
-                'Group Name',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 10),
+              // Group Name and Description Input
               _buildInputField(_groupNameController, 'Enter Group Name'),
               const SizedBox(height: 20),
+              _buildInputField(
+                  _descriptionController, 'Enter Group Description'),
 
-              // Group Description Input
-              Text(
-                'Group Description',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
+              //Date Picker Button
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  final pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2021),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (pickedDate != null) {
+                    setState(() {
+                      _selectedDueDate = pickedDate;
+                    });
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  backgroundColor: Colors.white, // Text color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8), // Rounded corners
+                    side: BorderSide(
+                        color: Colors.grey[300]!, width: 1.0), // Outline
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 15, horizontal: 16), // Padding
+                ),
+                child: Text(
+                  _selectedDueDate == null
+                      ? 'Select Due Date'
+                      : 'Due Date: ${_selectedDueDate!.toLocal()}'
+                          .split(' ')[0],
+                  style: GoogleFonts.poppins(
+                    color: const Color.fromARGB(255, 38, 157, 87),
+                    fontSize: 15,
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-              _buildInputField(
-                _descriptionController,
-                'Enter Group Description',
-              ),
-              const SizedBox(height: 20),
 
               // "CREATE" Button
               GestureDetector(
                 onTap: () async {
-                  final user = FirebaseAuth.instance.currentUser;
+                  final groupName = _groupNameController.text.trim();
+                  final description = _descriptionController.text.trim();
 
-                  if (user == null) {
+                  // Check for empty fields
+                  if (groupName.isEmpty ||
+                      description.isEmpty ||
+                      _selectedDueDate == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                            Text("You must be logged in to create a group"),
-                      ),
-                    );
-                    return;
-                  }
-
-                  String groupName = _groupNameController.text.trim();
-                  String description = _descriptionController.text.trim();
-
-                  // Validate input
-                  if (groupName.isEmpty || description.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("All fields are required"),
-                      ),
+                      const SnackBar(content: Text("All fields are required")),
                     );
                     return;
                   }
 
                   try {
-                    // Call createGroup to save group in Firestore
-                    // Add creator to the members array during group creation
+                    // Add the current user as the first member with their info
+                    List<Map<String, String>> members = [
+                      {
+                        'uid': userId,
+                        'name': username,
+                      }
+                    ];
+
                     String uniqueCode = await groupDataHandler.createGroup(
                       context,
                       FirebaseAuth.instance.currentUser!.uid,
                       groupName,
                       description,
-                      members: [
-                        {
-                          'id': FirebaseAuth.instance.currentUser!.uid,
-                          'username':
-                              FirebaseAuth.instance.currentUser!.displayName ??
-                                  '',
-                          'status': 'active',
-                        },
-                      ],
+                      members: members,
+                      dueDate: _selectedDueDate!, // Pass the selected due date
                     );
 
-                    // Clear input fields
                     _groupNameController.clear();
                     _descriptionController.clear();
-                    _usernameController.clear();
 
-                    // Show dialog with the unique code and a view button
                     if (context.mounted) {
                       showDialog(
                         context: context,
@@ -243,24 +197,25 @@ class _CreateGroupState extends State<CreateGroup> {
                       );
                     }
                   } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Failed to create group: $e"),
-                        ),
-                      );
-                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Failed to create group: $e")),
+                    );
                   }
                 },
-                child: Text(
-                  'CREATE',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.white,
-                  ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      'CREATE',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               )
             ],
@@ -306,7 +261,6 @@ class _CreateGroupState extends State<CreateGroup> {
   void dispose() {
     _groupNameController.dispose();
     _descriptionController.dispose();
-    _usernameController.dispose();
     super.dispose();
   }
 }
