@@ -198,6 +198,7 @@ class Tasksdata {
           ...taskData!,
           'completed':
               true, // Ensure the task is marked as completed in the new collection
+          'completedAt': FieldValue.serverTimestamp(),
         });
 
         await Future.delayed(const Duration(seconds: 2)); // Simulate a delay
@@ -222,6 +223,7 @@ class Tasksdata {
     }
   }
 
+//method to update user points
   Future<void> updateUserPoints() async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -319,9 +321,9 @@ class Tasksdata {
     });
   }
 
-  //method to fetch completed tasks from yesterday
+//method to fetch completed tasks for yesterday
   Stream<List<Map<String, dynamic>>> getYesterdayCompletedTasks() {
-    final user = FirebaseAuth.instance.currentUser; // indicates the current user
+    final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
       throw Exception('No user is logged in');
