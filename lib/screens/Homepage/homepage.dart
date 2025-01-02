@@ -343,7 +343,7 @@ class HomePage extends StatelessWidget {
                         ),
                         // Display the time the task was completed
                         trailing: Text(
-                          "Completed: at ${_formatTime(DateTime.now())}",
+                          "Completed at ${_formatTime(task?['time'])}",
                           style: GoogleFonts.quicksand(
                               color: Colors.indigo[900],
                               fontWeight: FontWeight.bold),
@@ -360,17 +360,18 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // Format time utility
+  // Format time utility to display time in AM/PM format
   String _formatTime(task) {
-    try {
-      final time = task.toDate();
-      final hour = time.hour > 12 ? time.hour - 12 : time.hour;
-      final minute = time.minute.toString().padLeft(2, '0');
-      final period = time.hour >= 12 ? 'PM' : 'AM';
-      return '$hour:$minute $period';
-    } catch (e) {
-      return 'Invalid Time';
-    }
+    final DateTime time = task.toDate();
+    final String hour = time.hour > 12
+        ? (time.hour - 12).toString()
+        : time.hour == 0
+            ? '12'
+            : time.hour.toString();
+    final String minute =
+        time.minute < 10 ? '0${time.minute}' : time.minute.toString();
+    final String period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   //function to get yesterday's date
