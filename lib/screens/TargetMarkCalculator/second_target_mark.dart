@@ -339,17 +339,19 @@ class _SecondTargetMarkCalculatorState
     );
   }
 
-  void _calculateTargetGpa() {
-    if (_courses.isEmpty) {
-      // Show a SnackBar to alert the user
+void _calculateTargetGpa() {
+  // Check if all inputs are filled
+  for (var course in _courses) {
+    if (course['name'].isEmpty || course['grade'] == null || course['credits'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add at least one course before calculating!'),
+          content: Text('Please fill in all the fields completely before calculating.'),
           backgroundColor: Colors.red,
         ),
       );
-      return; // Stop further execution
+      return; // Stop execution if any field is incomplete
     }
+  }
 
     // Calculate the target GPA
     double targetGpa = GPACalculator.calculateGpa(
@@ -382,25 +384,25 @@ class GPACalculator {
     switch (grade) {
       case 'A+':
       case 'A':
-        return 4.0;
+        return 4.00;
       case 'A-':
-        return 3.7;
+        return 3.67;
       case 'B+':
-        return 3.3;
+        return 3.33;
       case 'B':
-        return 3.0;
+        return 3.00;
       case 'B-':
-        return 2.7;
+        return 2.67;
       case 'C+':
-        return 2.3;
+        return 2.33;
       case 'C':
-        return 2.0;
+        return 2.00;
       case 'C-':
-        return 1.7;
+        return 1.67;
       case 'D+':
-        return 1.3;
+        return 1.33;
       case 'D':
-        return 1.0;
+        return 1.00;
       case 'F':
         return 0.0;
       default:
