@@ -23,49 +23,76 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
     return user?.uid ?? '';
   }
 
-  // Join group function
+// Join group function
   Future<void> _joinGroup() async {
     final uniqueCode = _codeController.text.trim();
 
     try {
-      // Fetch the group with the matching unique code
-      final groupSnapshot =
-          await _firestore.collection('groups').doc(uniqueCode).get();
+      // Fetch the group with the matching unique code by querying the `uniqueCode` field
+      final groupSnapshot = await _firestore
+          .collection('groups')
+          .where('uniqueCode',
+              isEqualTo: uniqueCode) // Corrected to use where query
+          .limit(1) // We expect only one group with a uniqueCode
+          .get();
 
-      if (groupSnapshot.exists) {
-        final groupData = groupSnapshot.data();
-        final List<dynamic> members = groupData?['members'] ?? [];
+      if (groupSnapshot.docs.isNotEmpty) {
+        // Since uniqueCode is expected to be unique, we proceed with the first document
+        final groupDoc = groupSnapshot.docs.first;
+
+        // Reference to the group's members subcollection
+        final membersRef = _firestore
+            .collection('groups')
+            .doc(groupDoc.id) // Use the doc ID of the found group
+            .collection('members');
 
         // Check if the user is already a member
-        if (!members.contains(userId)) {
-          members.add(userId); // Add user ID as a string
+        final memberSnapshot = await membersRef.doc(userId).get();
 
-          // Update Firestore document
-          await _firestore
-              .collection('groups')
-              .doc(uniqueCode)
-              .update({'members': members});
+        if (!memberSnapshot.exists) {
+          // Get the current user's display name
+          final userName =
+              FirebaseAuth.instance.currentUser?.displayName ?? 'name';
 
-          // Navigate to GroupDetailsScreen with the unique code
+          // Add the user to the members subcollection along with the username
+          await membersRef.doc(userId).set({
+            'userId': userId,
+            'name': userName, // Save the user's name
+            'joinedAt': FieldValue.serverTimestamp(),
+          });
+
+          // Add the uniqueCode to the user's 'groupCodes' field
+          await _firestore.collection('users').doc(userId).update({
+            'groupCodes': FieldValue.arrayUnion(
+                [uniqueCode]), // Adds the uniqueCode to the list
+          }).catchError((e) {
+            // Handle error if any while updating 'groupCodes'
+            throw Exception('Error updating groupCodes: $e');
+          });
+
+          // Navigate to GroupDetailsScreen with the uniqueCode
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    GroupDetailsScreen(uniqueCode: uniqueCode)),
+              builder: (context) => GroupDetailsScreen(uniqueCode: uniqueCode),
+            ),
           );
         } else {
+          // If already a member, show snackbar
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text('You are already a member of this group.')),
           );
         }
       } else {
+        // If group with the given uniqueCode does not exist
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
               content: Text('Invalid group code. Please try again.')),
         );
       }
     } catch (e) {
+      // Handle errors during the process
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to join group: $e')),
       );
