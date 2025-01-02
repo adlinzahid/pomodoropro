@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pomodororpo/screens/GroupCollab/group_data_handler.dart';
@@ -25,56 +26,80 @@ class ViewGroupsList extends StatelessWidget {
             return const Center(child: Text('No groups found.'));
           } else {
             final groups = snapshot.data!;
+
             return ListView.builder(
               itemCount: groups.length,
               itemBuilder: (context, index) {
                 final group = groups[index];
                 final groupName = group['groupName'] ?? 'No Group Name';
                 final uniqueCode = group['uniqueCode'] ?? 'No Group Code';
-                final members = group['members'] as List<dynamic>? ?? [];
-                final memberCount = members.length;
+                final description = group['description'] ?? 'No Description';
 
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  color: Colors.green[100],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 5,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      groupName,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: const Color.fromARGB(255, 8, 50, 11),
-                      ),
-                    ),
-                    subtitle: Text(
-                      '$memberCount Members • Group Code: $uniqueCode',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      // Navigate to GroupDetailsScreen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => GroupDetailsScreen(
-                            groupName: groupName,
-                            uniqueCode: uniqueCode,
-                            members: List<String>.from(
-                                members), // Cast to List<String>
+                // Fetching members in parallel
+                return FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('groups')
+                      .doc(uniqueCode)
+                      .collection('members')
+                      .get(),
+                  builder: (context, memberSnapshot) {
+                    if (memberSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (memberSnapshot.hasError) {
+                      return Center(
+                          child: Text('Error: ${memberSnapshot.error}'));
+                    } else if (!memberSnapshot.hasData ||
+                        memberSnapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text('No members found.'));
+                    } else {
+                      final members = memberSnapshot.data!.docs;
+                      final memberCount = members.length;
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 16),
+                        color: Colors.green[100],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 5,
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          title: Text(
+                            groupName,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: const Color.fromARGB(255, 8, 50, 11),
+                            ),
                           ),
+                          subtitle: Text(
+                            '$memberCount Members • $description • Group Code: $uniqueCode',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => GroupDetailsScreen(
+                                  groupName: groupName,
+                                  uniqueCode: uniqueCode,
+                                  members: members
+                                      .map((doc) => doc['name'] as String)
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       );
-                    },
-                  ),
+                    }
+                  },
                 );
               },
             );
