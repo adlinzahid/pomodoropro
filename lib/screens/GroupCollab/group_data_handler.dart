@@ -5,13 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 class GroupDataHandler {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   //Method to allow current logged in user to create a new group collaboration and store the group id (uniqueCode) in user's document
   Future<String> createGroup(
-      BuildContext context, String uid, String groupName, String description,
-      {required List<Map<String, String>> members}) async {
+    BuildContext context,
+    String uid,
+    String groupName,
+    String description, {
+    required List<Map<String, String>> members,
+    required DateTime dueDate,
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -27,30 +31,48 @@ class GroupDataHandler {
     }
 
     // Generate a unique code for the group using the Uuid package
-    // This code will be 8 characters long and uppercase using 1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ and abcdefghijklmnopqrstuvwxyz
     var uuid = Uuid();
     String uniqueCode = uuid.v4().substring(0, 8).toUpperCase();
 
-    // Create the group data
+    // Create group data
     Map<String, dynamic> groupData = {
       'createdBy': user.uid,
       'groupName': groupName,
-      'members': [user.uid], // Store only UIDs for querying simplicity
       'uniqueCode': uniqueCode,
-      'createdAt': FieldValue.serverTimestamp(),
       'description': description,
+      'createdAt': FieldValue.serverTimestamp(),
       'status': 'active',
+      // ignore: unnecessary_null_comparison
+      'dueDate': dueDate != null
+          ? Timestamp.fromDate(dueDate)
+          : null, // The due date field can be added later when it's set
+      'groupProgress': 0, // Starting the group progress at 0%
     };
 
     try {
       // Add the group to Firestore under the 'groups' collection
       await _firestore.collection('groups').doc(uniqueCode).set(groupData);
 
-      // Now, update the user's data to store the uniqueCode in their `groupCodes` field
+      //now update the user's data to store the uniqueCode in their 'groupCodes' field
       await _firestore.collection('users').doc(user.uid).update({
-        'groupCodes':
-            FieldValue.arrayUnion([uniqueCode]), // Store the uniqueCode here
+        'groupCodes': FieldValue.arrayUnion([uniqueCode]),
       });
+      developer.log('Users groupCodes updated');
+
+      //add the user's uid to the group's subcollection 'members', this will be used to track the group members, user.uid will be the document id for documents under 'members' subcollection
+      await _firestore
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(user.uid)
+          .set({
+        'uid': user.uid,
+        'name': user.displayName ?? 'Anonymous',
+        'progress': 'Not yet started',
+        'joinedAt': FieldValue.serverTimestamp(),
+        'tasks': [],
+      });
+      developer.log('User added to group members subcollection');
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -71,91 +93,148 @@ class GroupDataHandler {
   }
 
   // Fetch group details using uniqueCode
-  Future<List<DocumentSnapshot<Map<String, dynamic>>>>
-      fetchGroupDetails() async {
+  Future<Map<String, dynamic>> fetchGroupDetails(String uniqueCode) async {
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) {
       throw Exception("User not logged in");
     }
 
     try {
-      // Query groups where the user is a member
-      final querySnapshot = await _firestore
+      //display groups where the user.uid is a member
+      final groupDoc = await FirebaseFirestore.instance
           .collection('groups')
-          .where('members', arrayContains: user.uid)
+          .doc(uniqueCode)
           .get();
 
-      if (querySnapshot.docs.isEmpty) {
-        throw Exception("No groups found");
+      if (!groupDoc.exists) {
+        throw Exception("Group not found");
       }
 
-      return querySnapshot.docs; // Return all matching group documents
+      // Map Firestore document to group details
+      return {
+        'groupName': groupDoc.data()?['groupName'] ?? 'Unnamed Group',
+        'uniqueCode': groupDoc.data()?['uniqueCode'] ?? '',
+        'members': List<String>.from(
+            groupDoc.data()?['members'] ?? []), // Safely parse members
+      };
     } catch (e) {
       developer.log('Error fetching group details: $e');
       throw Exception("Error fetching group details");
     }
   }
 
-// Fetch all groups where the user is a member or creator
+//Fetch all groups where the user is a member or creator based on the groupCodes field in the users collection
   Future<List<Map<String, dynamic>>> fetchUserGroups() async {
     final user = FirebaseAuth.instance.currentUser;
 
-    // Ensure the user is logged in
     if (user == null) {
       throw Exception("User not logged in");
     }
 
     try {
-      // Fetch all groups where the user is a member
-      final groupQuery = await FirebaseFirestore.instance
-          .collection('groups')
-          .where('members', arrayContains: user.uid)
+      //fetch all groups where the user is a member or creator
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
           .get();
 
-      if (groupQuery.docs.isEmpty) {
-        return []; // No groups found, return an empty list
+      if (!userDoc.exists) {
+        throw Exception("User document not found");
       }
 
-      // Map Firestore documents to group details
-      return groupQuery.docs.map((doc) {
-        return {
-          'groupName': doc.data()['groupName'] ?? 'Unnamed Group',
-          'uniqueCode': doc.data()['uniqueCode'] ?? '',
-          'members': List<String>.from(
-              doc.data()['members'] ?? []), // Safely parse members
-        };
-      }).toList();
+      List<dynamic> groupCodes = userDoc.data()?['groupCodes'] ??
+          []; //retrieve the groupCodes field from the user's document
+      if (groupCodes.isEmpty) {
+        return [];
+      }
+
+      // Fetch group details for each group code
+      QuerySnapshot groupSnapshots = await FirebaseFirestore.instance
+          .collection('groups')
+          .where('uniqueCode', whereIn: groupCodes)
+          .get();
+
+      return groupSnapshots.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
     } catch (e) {
       developer.log('Error fetching user groups: $e');
       throw Exception("Error fetching user groups");
     }
   }
 
-  // Add a new message to the group collaboration collection
-  Future<void> addMessage(String message) async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      await _firestore.collection('group_collaboration').add({
-        'userName': user.displayName ?? "Anonymous",
-        'message': message,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+// Fetch the username for a given UID
+  Future<String> fetchUsername(String uid) async {
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (userDoc.exists) {
+      return userDoc.data()?['username'] ?? 'Unknown';
+    } else {
+      throw Exception('User document not found for UID: $uid');
     }
   }
 
-  // Fetch all messages from the group collaboration collection
-  Stream<List<Map<String, dynamic>>> getMessages() {
-    return _firestore
-        .collection('group_collaboration')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              return {
-                'userName': doc['userName'],
-                'message': doc['message'],
-                'timestamp': doc['timestamp'],
-              };
-            }).toList());
+//method to allow members to add their task to the group and save it in firestore, a subcollection under 'members' named 'taskGroup'
+  Future<void> addTaskToGroup(
+    String uniqueCode,
+    String taskName,
+    String taskDescription,
+    String assignedTo,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      // Add the task to the group's 'members' subcollection
+      await _firestore
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(user.uid)
+          .collection('taskGroup')
+          .add({
+        'taskName': taskName,
+        'assignedTo': assignedTo,
+        'status': 'Not yet started',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      developer.log('Error adding task to group: $e');
+      throw Exception("Error adding task to group");
+    }
+  }
+
+  //method to allow members to update their task progress in the group
+  Future<void> updateTaskProgress(
+    String uniqueCode,
+    String taskId,
+    String progress,
+  ) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
+
+    try {
+      // Update the task progress in the group's 'members' subcollection
+      await _firestore
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(user.uid)
+          .collection('taskGroup')
+          .doc(taskId)
+          .update({
+        'status': progress,
+      });
+    } catch (e) {
+      developer.log('Error updating task progress: $e');
+      throw Exception("Error updating task progress");
+    }
   }
 }
