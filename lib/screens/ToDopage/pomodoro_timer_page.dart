@@ -19,7 +19,8 @@ class PomodoroTimerPage extends StatefulWidget {
   State<PomodoroTimerPage> createState() => _PomodoroTimerPageState();
 }
 
-class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
+class _PomodoroTimerPageState extends State<PomodoroTimerPage>
+    with SingleTickerProviderStateMixin {
   int selectedMinutes = 0;
   int selectedSeconds = 0;
   late int remainingTime;
@@ -70,7 +71,9 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
 
   void resetTimer() {
     setState(() {
-      remainingTime = (selectedMinutes * 60) + selectedSeconds;
+      remainingTime = 0;
+      selectedMinutes = 0;
+      selectedSeconds = 0;
       isRunning = false;
       timer?.cancel();
     });
@@ -79,13 +82,11 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
   void _showCompletionDialog() async {
     final AudioPlayer audioPlayer = AudioPlayer();
     try {
-      // Play the completion sound
       await audioPlayer.play(AssetSource('sounds/timer_done.mp3'));
     } catch (e) {
       debugPrint('Error playing sound: $e');
     }
 
-    // Show the completion dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -121,7 +122,6 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Minutes Picker
                     Expanded(
                       child: ListWheelScrollView.useDelegate(
                         controller: FixedExtentScrollController(
@@ -141,7 +141,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                               style: const TextStyle(fontSize: 24),
                             ),
                           ),
-                          childCount: 60, // 0-59 minutes
+                          childCount: 60,
                         ),
                       ),
                     ),
@@ -150,7 +150,6 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                       style:
                           TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                    // Seconds Picker
                     Expanded(
                       child: ListWheelScrollView.useDelegate(
                         controller: FixedExtentScrollController(
@@ -170,7 +169,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                               style: const TextStyle(fontSize: 24),
                             ),
                           ),
-                          childCount: 60, // 0-59 seconds
+                          childCount: 60,
                         ),
                       ),
                     ),
@@ -201,6 +200,10 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
 
   @override
   Widget build(BuildContext context) {
+    double progress = remainingTime == 0
+        ? 0
+        : remainingTime / ((selectedMinutes * 60) + selectedSeconds);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pomodoro Timer'),
@@ -208,14 +211,12 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
       ),
       body: Column(
         children: [
-          // Task details in a box
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(
-                    255, 211, 245, 212), //shade color of task details
+                color: const Color.fromARGB(255, 211, 245, 212),
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(color: Colors.green.shade800, width: 2.0),
                 boxShadow: [
@@ -248,44 +249,61 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
               ),
             ),
           ),
-          // Timer display
+          Text(
+            'Click on the timer to set your preferences.',
+            style: GoogleFonts.quicksand(
+              fontSize: 16.0,
+              color: Colors.black54,
+            ),
+          ),
           Expanded(
             child: Center(
               child: GestureDetector(
-                onTap: _showTimePicker, // Function to open the time picker
+                onTap: _showTimePicker,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Circle background
-                    CircleAvatar(
-                      radius: 120.0,
-                      backgroundColor: const Color.fromARGB(255, 18, 77, 19),
+                     // Added background green circle
+          Container(
+            width: 240.0,
+            height: 240.0,
+            decoration: const BoxDecoration(
+              color: Color.fromARGB(255, 211, 245, 212), // Green fill color
+              shape: BoxShape.circle,
+            ),
+          ),
+                    SizedBox(
+                      width: 240.0,
+                      height: 240.0,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 10.0,
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor: const AlwaysStoppedAnimation(
+                          Color.fromARGB(255, 18, 77, 19),
+                        ),
+                      ),
                     ),
-                    // Text displayed in the center
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // ignore: unrelated_type_equality_checks
-                        if (remainingTime ==
-                            Duration
-                                .zero) // Display "Set Timer" if no time is set
-                          const Text(
-                            'Set Timer',
-                            style: TextStyle(
-                              fontSize: 24.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          )
-                        else // Display the countdown timer if time is set
-                          Text(
-                            formatTime(remainingTime),
-                            style: const TextStyle(
-                              fontSize: 48.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                        Text(
+                          formatTime(remainingTime),
+                          style: const TextStyle(
+                            fontSize: 48.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
                           ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        const Text(
+                          'FOCUS',
+                          style: TextStyle(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -293,8 +311,6 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
               ),
             ),
           ),
-
-          // Timer controls
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0),
             child: Row(
