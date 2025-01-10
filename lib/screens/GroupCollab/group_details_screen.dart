@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pomodororpo/screens/GroupCollab/group_data_handler.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 
 class GroupDetailsScreen extends StatefulWidget {
   final String groupName;
@@ -29,11 +30,53 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final TextEditingController taskDescriptionController =
       TextEditingController();
   DateTime? groupDueDate; // Due date for the group
+  /// Convert progress integer to text for display
+  String _progressText(int progress) {
+    const progressMapping = {
+      0: "Not started yet",
+      1: "In progress",
+      2: "Completed"
+    };
+    return progressMapping[progress] ?? "Unknown";
+  }
+
+  Map<String, String> memberNameToUid = {};
 
   @override
   void initState() {
     super.initState();
     _fetchGroupDueDate();
+    _fetchMemberUids(); // Fetch UIDs for members
+  }
+
+  Future<void> _fetchMemberUids() async {
+    try {
+      final groupDoc = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.uniqueCode)
+          .get();
+
+      if (groupDoc.exists) {
+        final List<Map<String, dynamic>>? membersData =
+            (groupDoc.data()?['membersData'] as List<dynamic>?)
+                ?.cast<Map<String, dynamic>>();
+
+        if (membersData != null) {
+          setState(() {
+            memberNameToUid = {
+              for (var member in membersData)
+                member['name']:
+                    member['uid'], // Ensure Firestore structure matches
+            };
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Failed to fetch member UIDs: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error fetching members' details: $e")),
+      );
+    }
   }
 
   // Fetch the due date for the group from Firestore
@@ -142,11 +185,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 final taskName = taskNameController.text;
                 final taskDescription = taskDescriptionController.text;
 
-                if (taskName.isEmpty || taskDescription.isEmpty) {
+                if (taskName.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content:
-                          Text("Task name and description cannot be empty"),
+                      content: Text("Task name cannot be empty"),
                     ),
                   );
                   return;
@@ -235,82 +277,96 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: widget.members.length,
-                itemBuilder: (context, index) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Member's Name with Progress Dropdown Card
-                      Expanded(
-                        flex: 3, // Adjust the width for this card
-                        child: Card(
-                          color: Colors.blue[50],
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 10.0, horizontal: 4.0),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Member Name
-                                Row(
-                                  children: [
-                                    const Icon(Icons.person),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        widget.members[index],
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                        style:
-                                            GoogleFonts.poppins(fontSize: 20),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.info_outline),
-                                      onPressed: () {
-                                        // Handle info button press
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return AlertDialog(
-                                              title:
-                                                  Text(widget.members[index]),
-                                              content: Text(
-                                                  'Additional information about ${widget.members[index]}'),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                  child: const Text('Close'),
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                              ],
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 100.0),
+                child: ListView.builder(
+                  itemCount: widget.members.length,
+                  itemBuilder: (context, index) {
+                    final memberName = widget.members[index];
+
+                    return Card(
+                      child: ListTile(
+                          title: Text(memberName),
+                          trailing: IconButton(
+                            icon: Icon(
+                              Icons.info_outline,
+                              color: Colors.blue[900],
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                            onPressed: () {
+                              // Assuming `widget.uniqueCode` and `widget.members[index]` are properly set
+                              final userId = widget.members[
+                                  index]; // Or use user.uid depending on your structure
+
+                              // Show the dialog when the icon button is pressed
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text(
+                                      'Tasks for ${widget.members[index]}'),
+                                  content:
+                                      FutureBuilder<List<Map<String, dynamic>>>(
+                                    future: _groupDataHandler.fetchUserTasks(
+                                        widget.uniqueCode,
+                                        userId), // Use the correct userId
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                            child: CircularProgressIndicator());
+                                      }
+
+                                      if (snapshot.hasError) {
+                                        return Text('Error: ${snapshot.error}');
+                                      }
+
+                                      final tasks = snapshot.data;
+
+                                      if (tasks == null || tasks.isEmpty) {
+                                        return const Text(
+                                            'No tasks found for this user.');
+                                      }
+
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          for (var task in tasks)
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Task Name: ${task['taskName']}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                Text(
+                                                    'Description: ${task['taskDescription']}'),
+                                                Text(
+                                                    'Status: ${task['status']}'),
+                                                const Divider(),
+                                              ],
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                          )),
+                    );
+                  },
+                ),
               ),
             ),
           ],
         ),
       ),
       //add two floating buttons here: add task and update progress of the task for the current user
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
       floatingActionButton: Stack(
         children: [
           Positioned(
@@ -328,11 +384,108 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             right: 16.0,
             child: FloatingActionButton(
               backgroundColor: Colors.blue[50],
-              onPressed: () async {
-                await _groupDataHandler.updateTaskProgress(widget.uniqueCode,
-                    taskNameController.text, taskDescriptionController.text);
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    int? selectedProgress;
+                    return AlertDialog(
+                      title: Text("Update Task Progress"),
+                      content: StatefulBuilder(
+                        builder: (BuildContext context, StateSetter setState) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DropdownButton<int>(
+                                value: selectedProgress,
+                                hint: Text("Select Progress"),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 0,
+                                    child: Text("Not started yet"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 1,
+                                    child: Text("In progress"),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 2,
+                                    child: Text("Completed"),
+                                  ),
+                                ],
+                                onChanged: (int? value) {
+                                  setState(() {
+                                    selectedProgress = value;
+                                  });
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pop(context), // Close dialog
+                          child: Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            if (selectedProgress != null) {
+                              try {
+                                // Fetch the taskId using the uniqueCode and userId
+                                final taskId =
+                                    await _groupDataHandler.fetchTaskId(
+                                        widget.uniqueCode,
+                                        FirebaseAuth.instance.currentUser!.uid);
+
+                                // Proceed only if a taskId is found
+                                if (taskId.isNotEmpty) {
+                                  // Show the loading indicator
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => Center(
+                                        child: CircularProgressIndicator()),
+                                  );
+
+                                  // Call the _updateTaskProgress method with the fetched taskId
+                                  await _updateTaskProgress(
+                                    context,
+                                    widget.uniqueCode,
+                                    taskId, // Use the fetched taskId here
+                                    selectedProgress!,
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'No tasks found for the user')),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Error fetching taskId: $e')),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Please select a progress option')),
+                              );
+                            }
+                          },
+                          child: Text("Update"),
+                        )
+                      ],
+                    );
+                  },
+                );
               },
-              tooltip: 'Set Due Date',
+              tooltip: 'Update Task Progress',
               child: Icon(
                 Icons.update,
                 color: Colors.blue[900],
@@ -342,5 +495,82 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _updateTaskProgress(
+    BuildContext context,
+    String uniqueCode,
+    String taskId,
+    int progress,
+  ) async {
+    try {
+      await _groupDataHandler.updateTaskProgress(uniqueCode, taskId, progress);
+      Navigator.pop(context); // Close the dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Progress updated to "${_progressText(progress)}"')),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Close the dialog on error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update progress: $e')),
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchMemberTasksAndProgress(
+      String uniqueCode, String uid) async {
+    try {
+      final taskSnapshots = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(uid)
+          .collection('taskGroup')
+          .get();
+
+      final tasks = taskSnapshots.docs.map((doc) => doc.data()).toList();
+      final totalTasks = tasks.length;
+      final completedTasks =
+          tasks.where((task) => task['isCompleted'] == true).length;
+
+      final progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+      return {
+        'tasks': tasks,
+        'progress': progress,
+      };
+    } catch (e) {
+      developer.log('Error fetching member tasks: $e');
+      return {
+        'tasks': [],
+        'progress': 0,
+      };
+    }
+  }
+
+  Future<Map<String, String>> fetchMemberNameToUid(String uniqueCode) async {
+    try {
+      final membersSnapshot = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .get();
+
+      final Map<String, String> memberNameToUid = {};
+
+      for (var doc in membersSnapshot.docs) {
+        final uid = doc.id;
+        final name = doc.data()['name'] as String? ?? 'Unknown';
+
+        memberNameToUid[name] = uid;
+      }
+
+      developer.log('Fetched memberNameToUid: $memberNameToUid');
+      return memberNameToUid;
+    } catch (e) {
+      developer.log('Error fetching memberNameToUid: $e');
+      return {};
+    }
   }
 }
