@@ -176,7 +176,7 @@ class GroupDataHandler {
   }
 
 //method to allow members to add their task to the group and save it in firestore, a subcollection under 'members' named 'taskGroup'
-  Future<void> addTaskToGroup(
+  Future<String> addTaskToGroup(
     String uniqueCode,
     String taskName,
     String taskDescription,
@@ -184,35 +184,106 @@ class GroupDataHandler {
   ) async {
     final user = FirebaseAuth.instance.currentUser;
 
+    // Check if the user is logged in
     if (user == null) {
       throw Exception("User not logged in");
     }
 
+    // Validate input
+    if (taskName.isEmpty) {
+      throw Exception("Task name cannot be empty");
+    }
+
     try {
-      // Add the task to the group's 'members' subcollection
-      await _firestore
+      // Firestore reference
+      final firestore = FirebaseFirestore.instance;
+
+      //Generate a unique id for the task, start the id with GT (Group Task) to differentiate it from other tasks, length of 8
+      final taskId = 'GT${Uuid().v4().substring(0, 6).toUpperCase()}';
+
+      // Automatically creates the hierarchy if it doesn’t exist
+      await firestore
           .collection('groups')
           .doc(uniqueCode)
           .collection('members')
           .doc(user.uid)
           .collection('taskGroup')
-          .add({
+          .doc(taskId)
+          .set({
         'taskName': taskName,
+        'taskDescription': taskDescription,
+        'taskId': taskId,
         'assignedTo': assignedTo,
         'status': 'Not yet started',
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      developer
+          .log('Task successfully added to the group with taskId: $taskId');
+      return taskId;
     } catch (e) {
+      // Log error
       developer.log('Error adding task to group: $e');
       throw Exception("Error adding task to group");
     }
   }
 
-  //method to allow members to update their task progress in the group
+//method to allow members to fetch their tasks in the group from firestore from the subcollection 'taskGroup' under 'members' that they are assigned to
+  Future<List<Map<String, dynamic>>> fetchUserTasks(
+      String uniqueCode, String userId) async {
+    try {
+      // Path to the user's tasks
+      final taskCollection = FirebaseFirestore.instance
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(userId)
+          .collection('taskGroup');
+
+      // Get all tasks
+      final querySnapshot = await taskCollection.get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return []; // No tasks found
+      }
+
+      // Convert tasks to a list of maps
+      return querySnapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      throw Exception("Error fetching user tasks: $e");
+    }
+  }
+
+  //method to fetch taskId from firestore from the subcollection 'taskGroup' under 'members' that they are assigned to
+  Future<String> fetchTaskId(String uniqueCode, String userId) async {
+    try {
+      // Path to the user's tasks
+      final taskCollection = FirebaseFirestore.instance
+          .collection('groups')
+          .doc(uniqueCode)
+          .collection('members')
+          .doc(userId)
+          .collection('taskGroup');
+
+      // Get all tasks
+      final querySnapshot = await taskCollection.get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return ''; // No tasks found
+      }
+
+      // Convert tasks to a list of maps
+      return querySnapshot.docs.first.id;
+    } catch (e) {
+      throw Exception("Error fetching user tasks: $e");
+    }
+  }
+
+  //method to allow members to update their task progress in the group with choice of 'Not yet started', 'In progress', 'Completed' and storing it in firestore using number values 0, 1, 2
   Future<void> updateTaskProgress(
     String uniqueCode,
     String taskId,
-    String progress,
+    int progress,
   ) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -221,16 +292,15 @@ class GroupDataHandler {
     }
 
     try {
-      // Update the task progress in the group's 'members' subcollection
-      await _firestore
-          .collection('groups')
-          .doc(uniqueCode)
-          .collection('members')
-          .doc(user.uid)
-          .collection('taskGroup')
-          .doc(taskId)
+      // Update the task progress directly within the user's document under 'tasks'
+      await FirebaseFirestore.instance
+          .collection('groups') // Access the 'groups' collection
+          .doc(uniqueCode) // Navigate to the specific group
+          .collection('members') // Access the group's members subcollection
+          .doc(user.uid) // Navigate to the current user's document
           .update({
-        'status': progress,
+        'tasks.$taskId.status':
+            progress, // Update the status of the specific task
       });
     } catch (e) {
       developer.log('Error updating task progress: $e');
