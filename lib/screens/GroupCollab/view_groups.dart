@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,7 +37,6 @@ class ViewGroupsList extends StatelessWidget {
                 final uniqueCode = group['uniqueCode'] ?? 'No Group Code';
                 final description = group['description'] ?? 'No Description';
 
-                // Fetching members in parallel
                 return FutureBuilder<QuerySnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('groups')
@@ -45,13 +46,14 @@ class ViewGroupsList extends StatelessWidget {
                   builder: (context, memberSnapshot) {
                     if (memberSnapshot.connectionState ==
                         ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const SizedBox(); // Skip displaying a card while loading.
                     } else if (memberSnapshot.hasError) {
-                      return Center(
-                          child: Text('Error: ${memberSnapshot.error}'));
+                      log('Error fetching members for group $uniqueCode: ${memberSnapshot.error}');
+                      return const SizedBox(); // Skip displaying groups with errors.
                     } else if (!memberSnapshot.hasData ||
                         memberSnapshot.data!.docs.isEmpty) {
-                      return const Center(child: Text('No members found.'));
+                      log('Group $uniqueCode has no members.');
+                      return const SizedBox(); // Skip groups with no members.
                     } else {
                       final members = memberSnapshot.data!.docs;
                       final memberCount = members.length;
