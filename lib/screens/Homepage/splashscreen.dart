@@ -86,81 +86,86 @@ class SplashScreenState extends State<SplashScreen> {
             child: _buildBubble(80, const Color(0xFF74B16F)), // Dark green
           ),
           // Centered logo and text
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Tilted "P"
-                  Transform.rotate(
-                    angle: -0.2, // Tilt the "P" slightly
-                    child: Text(
-                      "P",
-                      style: GoogleFonts.angkor(
-                        fontSize: 128,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Tilted "P"
+                      Transform.rotate(
+                        angle: -0.2, // Tilt the "P" slightly
+                        child: Text(
+                          "P",
+                          style: GoogleFonts.angkor(
+                            fontSize: 120,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "omodoro",
-                              style: GoogleFonts.angkor(
-                                fontSize: 60,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                height:
-                                    0.5, // Adjust the height for tighter spacing
-                                shadows: [
-                                  Shadow(
-                                    offset: Offset(1, 1),
-                                    blurRadius: 2,
-                                    color: Colors.grey.shade600,
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "omodoro",
+                                  style: GoogleFonts.angkor(
+                                    fontSize: 45,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    height:
+                                        0.5, // Adjust the height for tighter spacing
+                                    shadows: [
+                                      Shadow(
+                                        offset: Offset(1, 1),
+                                        blurRadius: 2,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(
-                                width:
-                                    8), // Add spacing between text and icon
-                            Icon(
-                              Icons.alarm,
-                              size: 50, // Adjust icon size to match the text
-                              color: Colors.black,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(1, 1),
-                                  blurRadius: 2,
-                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(
+                                    width:
+                                        8), // Add spacing between text and icon
+                                Icon(
+                                  Icons.alarm,
+                                  size:
+                                      35, // Adjust icon size to match the text
+                                  color: Colors.black,
+                                  shadows: [
+                                    Shadow(
+                                      offset: Offset(1, 1),
+                                      blurRadius: 2,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
+                            Text(
+                              "ro",
+                              style: GoogleFonts.angkor(
+                                fontSize: 50,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            ),
                           ],
                         ),
-                        Text(
-                          "ro",
-                          style: GoogleFonts.angkor(
-                            fontSize: 50,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-          
         ],
       ),
     );
